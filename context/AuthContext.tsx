@@ -15,7 +15,6 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   signInWithEmail: (email: string, pass: string) => Promise<{ error?: string }>;
   signUpWithEmail: (email: string, pass: string) => Promise<{ error?: string }>;
-  loginAsGuest: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,6 +27,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
 
   useEffect(() => {
+    // Clean up any deprecated mock guest items in browser storage
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("kahoot_guest_user");
+    }
+
     // Check active session from Supabase
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -42,18 +46,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null);
       setIsLoading(false);
     });
-
-    // Check localStorage guest user if no session
-    if (typeof window !== "undefined") {
-      const storedGuest = localStorage.getItem("kahoot_guest_user");
-      if (storedGuest && !session?.user) {
-        try {
-          setUser(JSON.parse(storedGuest));
-        } catch {
-          // ignore
-        }
-      }
-    }
 
     return () => {
       subscription.unsubscribe();
@@ -95,19 +87,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const loginAsGuest = () => {
-    const guestUser: Partial<User> = {
-      id: "guest-" + Math.random().toString(36).substring(2, 9),
-      email: "guest_player@kahootquiz.app",
-      user_metadata: { name: "Guest Player", avatar: "🎮" },
-    };
-    if (typeof window !== "undefined") {
-      localStorage.setItem("kahoot_guest_user", JSON.stringify(guestUser));
-    }
-    setUser(guestUser as User);
-    closeAuthModal();
-  };
-
   const signOut = async () => {
     if (typeof window !== "undefined") {
       localStorage.removeItem("kahoot_guest_user");
@@ -130,7 +109,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signOut,
         signInWithEmail,
         signUpWithEmail,
-        loginAsGuest,
       }}
     >
       {children}

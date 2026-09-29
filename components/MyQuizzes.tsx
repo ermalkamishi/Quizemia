@@ -15,6 +15,7 @@ import {
   Calendar,
   Layers,
   TrendingUp,
+  LogIn,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,7 +28,7 @@ import { fetchUserQuizzes, deleteQuiz } from "@/lib/supabase/queries";
 
 export default function MyQuizzes() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, openAuthModal, isLoading } = useAuth();
   const { toast } = useToast();
 
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
@@ -37,8 +38,13 @@ export default function MyQuizzes() {
 
   useEffect(() => {
     async function load() {
+      if (!user) {
+        setQuizzes([]);
+        setLoading(false);
+        return;
+      }
       setLoading(true);
-      const data = await fetchUserQuizzes(user?.id);
+      const data = await fetchUserQuizzes(user.id);
       setQuizzes(data);
       setLoading(false);
     }
@@ -76,6 +82,60 @@ export default function MyQuizzes() {
       type: "info",
     });
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-24 flex items-center justify-center">
+        <div className="h-10 w-10 rounded-full border-4 border-blue-600 border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex-1 max-w-3xl mx-auto w-full px-4 sm:px-6 py-16 sm:py-24 flex flex-col items-center justify-center text-center">
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.3 }}
+          className="p-8 sm:p-12 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl w-full space-y-6"
+        >
+          <div className="inline-flex p-5 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 text-blue-600 dark:text-blue-400">
+            <Lock className="h-10 w-10" />
+          </div>
+
+          <div className="space-y-2">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-zinc-900 dark:text-zinc-50">
+              Sign In to View My Quizzes
+            </h1>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-md mx-auto leading-relaxed">
+              Your personal library is available exclusively to signed-in creators. Guest quizzes are not saved after completing games.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+            <Button
+              size="lg"
+              onClick={() => openAuthModal("login")}
+              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold gap-2 shadow-md shadow-blue-500/20"
+            >
+              <LogIn className="h-4 w-4" />
+              <span>Sign In / Register</span>
+            </Button>
+            <Link href="/dashboard" className="w-full sm:w-auto">
+              <Button variant="outline" size="lg" className="w-full sm:w-auto font-semibold">
+                Explore Public Quizzes
+              </Button>
+            </Link>
+          </div>
+
+          <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 text-xs text-zinc-400">
+            ✨ Free cloud sync, permanent quiz storage &amp; points leaderboard.
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-12">

@@ -179,11 +179,12 @@ export async function fetchPublicQuizzes(): Promise<Quiz[]> {
  * Fetch quizzes created by the logged-in user for MyQuizzes
  */
 export async function fetchUserQuizzes(userId?: string | null): Promise<Quiz[]> {
-  const localList = getLocalQuizzes();
   if (!userId) {
-    // Return all locally created quizzes if guest/unauthenticated
-    return localList;
+    // Only signed-in users have a personal quiz library
+    return [];
   }
+
+  const localList = getLocalQuizzes();
 
   try {
     const { data, error } = await supabase
@@ -193,16 +194,16 @@ export async function fetchUserQuizzes(userId?: string | null): Promise<Quiz[]> 
       .order("created_at", { ascending: false });
 
     if (error || !data) {
-      return localList.filter((q) => q.user_id === userId || !q.user_id);
+      return localList.filter((q) => q.user_id === userId);
     }
 
     // Merge with any local quizzes that match this user
     const dbIds = new Set(data.map((q) => q.id));
-    const extraLocal = localList.filter((q) => !dbIds.has(q.id) && (q.user_id === userId || !q.user_id));
+    const extraLocal = localList.filter((q) => !dbIds.has(q.id) && q.user_id === userId);
     return [...data, ...extraLocal] as Quiz[];
   } catch (err) {
     console.warn("Using local user quizzes:", err);
-    return localList;
+    return localList.filter((q) => q.user_id === userId);
   }
 }
 
@@ -275,45 +276,50 @@ export async function createQuizWithQuestions(
     })),
   };
 
-  // Always save locally so the user can immediately play/test even without Supabase migration
-  saveLocalQuiz(newQuiz);
+  // Only persist to storage if user is signed in! Guests play transiently without saving.
+  if (userId) {
+    saveLocalQuiz(newQuiz);
 
-  try {
-    const { error: quizError } = await supabase.from("quizzes").insert([
-      {
-        id: quizId,
-        user_id: userId || null,
-        creator_email: userEmail || null,
-        title: input.title,
-        description: input.description,
-        category: input.category,
-        is_public: input.is_public,
-        cover_image: newQuiz.cover_image,
-        play_count: 0,
-      },
-    ]);
+    try {
+      const { error: quizError } = await supabase.from("quizzes").insert([
+        {
+          id: quizId,
+          user_id: userId,
+          creator_email: userEmail || null,
+          title: input.title,
+          description: input.description,
+          category: input.category,
+          is_public: input.is_public,
+          cover_image: newQuiz.cover_image,
+          play_count: 0,
+        },
+      ]);
 
-    if (!quizError && input.questions.length > 0) {
-      const questionsToInsert = newQuiz.questions!.map((q) => ({
-        id: q.id,
-        quiz_id: quizId,
-        question_text: q.question_text,
-        media_url: q.media_url || null,
-        time_limit: q.time_limit,
-        points: q.points,
-        order_index: q.order_index,
-        options: q.options,
-      }));
+      if (!quizError && input.questions.length > 0) {
+        const questionsToInsert = newQuiz.questions!.map((q) => ({
+          id: q.id,
+          quiz_id: quizId,
+          question_text: q.question_text,
+          media_url: q.media_url || null,
+          time_limit: q.time_limit,
+          points: q.points,
+          order_index: q.order_index,
+          options: q.options,
+        }));
 
-      await supabase.from("questions").insert(questionsToInsert);
+        await supabase.from("questions").insert(questionsToInsert);
+      }
+
+      return { success: true, quiz: newQuiz };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to sync to database";
+      console.warn("Saved locally, DB sync failed:", message);
+      return { success: true, quiz: newQuiz };
     }
-
-    return { success: true, quiz: newQuiz };
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Failed to sync to database";
-    console.warn("Saved locally, DB sync failed:", message);
-    return { success: true, quiz: newQuiz };
   }
+
+  // Guests: Return in-memory quiz for immediate play, but it is not saved anywhere.
+  return { success: true, quiz: newQuiz };
 }
 
 /**

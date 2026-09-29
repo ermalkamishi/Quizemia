@@ -24,6 +24,7 @@ import {
   Search,
   HelpCircle,
   Clock,
+  Info,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,7 +47,7 @@ const CATEGORIES = ["All", "General", "Geography", "Science", "Technology", "His
 export default function Quiz() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, openAuthModal } = useAuth();
   const { toast } = useToast();
 
   const quizIdParam = searchParams.get("id");
@@ -204,20 +205,30 @@ export default function Quiz() {
     setIsAnswerRevealed(true);
 
     if (option.is_correct) {
-      // Calculate speed-based score Kahoot-style: base points + speed bonus
-      const currentQ = activeQuiz?.questions?.[currentQuestionIdx];
-      const maxTime = currentQ?.time_limit || 20;
-      const speedFraction = Math.max(timeLeft / maxTime, 0.2);
-      const pointsEarned = Math.round(1000 * speedFraction + streak * 100);
+      if (user) {
+        // Calculate speed-based score Kahoot-style: base points + speed bonus
+        const currentQ = activeQuiz?.questions?.[currentQuestionIdx];
+        const maxTime = currentQ?.time_limit || 20;
+        const speedFraction = Math.max(timeLeft / maxTime, 0.2);
+        const pointsEarned = Math.round(1000 * speedFraction + streak * 100);
 
-      setScore((prev) => prev + pointsEarned);
-      setStreak((prev) => prev + 1);
+        setScore((prev) => prev + pointsEarned);
+        setStreak((prev) => prev + 1);
 
-      toast({
-        title: "Correct Answer! 🎉",
-        description: `+${pointsEarned} points awarded (Speed Bonus included)`,
-        type: "success",
-      });
+        toast({
+          title: "Correct Answer! 🎉",
+          description: `+${pointsEarned} points awarded (Speed Bonus included)`,
+          type: "success",
+        });
+      } else {
+        // Guests do NOT get points for answers or completion
+        setStreak((prev) => prev + 1);
+        toast({
+          title: "Correct Answer! 🎉",
+          description: "Sign in to earn points and climb the rankings!",
+          type: "success",
+        });
+      }
     } else {
       setStreak(0);
       toast({
@@ -348,12 +359,20 @@ export default function Quiz() {
     );
 
     if (result.success && result.quiz) {
-      toast({
-        title: "Quiz Saved!",
-        description: `"${result.quiz.title}" is ready to play!`,
-        type: "success",
-      });
-      setAvailableQuizzes((prev) => [result.quiz!, ...prev]);
+      if (user) {
+        toast({
+          title: "Quiz Saved!",
+          description: `"${result.quiz.title}" is saved to your library and ready to play!`,
+          type: "success",
+        });
+        setAvailableQuizzes((prev) => [result.quiz!, ...prev]);
+      } else {
+        toast({
+          title: "Guest Session Started",
+          description: `Playing "${result.quiz.title}". (Not saved to library as guest)`,
+          type: "info",
+        });
+      }
       startQuiz(result.quiz);
       setMode("play");
     }
@@ -430,8 +449,13 @@ export default function Quiz() {
                 <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-800">
                   <span className="text-xs font-semibold text-zinc-400 uppercase">Final Score</span>
                   <p className="text-2xl sm:text-3xl font-black text-amber-500 mt-1">
-                    {score.toLocaleString()}
+                    {user ? score.toLocaleString() : "0 pts"}
                   </p>
+                  {!user && (
+                    <span className="text-[10px] font-medium text-zinc-400 block mt-0.5">
+                      No points for guests
+                    </span>
+                  )}
                 </div>
                 <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-800">
                   <span className="text-xs font-semibold text-zinc-400 uppercase">Questions</span>
@@ -446,6 +470,22 @@ export default function Quiz() {
                   </p>
                 </div>
               </div>
+
+              {!user && (
+                <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-center space-y-2">
+                  <p className="text-xs sm:text-sm font-semibold text-amber-900 dark:text-amber-200">
+                    Points are not awarded to guests for completing quizzes. Sign in to earn points, build streaks, and save quizzes!
+                  </p>
+                  <Button
+                    size="sm"
+                    onClick={() => openAuthModal("signup")}
+                    className="bg-amber-600 hover:bg-amber-700 text-white font-bold gap-1.5"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    <span>Sign In to Earn Points</span>
+                  </Button>
+                </div>
+              )}
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
                 <Button
@@ -524,7 +564,7 @@ export default function Quiz() {
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-1 text-xs font-bold text-amber-600 bg-amber-50 dark:bg-amber-950/40 px-3 py-1.5 rounded-full border border-amber-200 dark:border-amber-900">
                     <Zap className="h-3.5 w-3.5 fill-amber-500" />
-                    <span>{score} pts</span>
+                    <span>{user ? `${score} pts` : "0 pts (Guest)"}</span>
                   </div>
                   {streak > 1 && (
                     <span className="hidden sm:inline-flex items-center gap-1 text-xs font-bold text-red-600 bg-red-50 dark:bg-red-950/40 px-2.5 py-1.5 rounded-full border border-red-200">
@@ -864,13 +904,21 @@ export default function Quiz() {
          ========================================================================= */}
       {mode === "create" && (
         <div className="flex-1 space-y-8 animate-in fade-in duration-200">
-          <div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              Quiz Creation Studio
-            </h2>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-              Create 4-choice interactive quizzes manually or let AI distill your notes into questions.
-            </p>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                Quiz Creation Studio
+              </h2>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+                Create 4-choice interactive quizzes manually or let AI distill your notes into questions.
+              </p>
+            </div>
+            {!user && (
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-xs font-semibold text-amber-700 dark:text-amber-300">
+                <Info className="h-3.5 w-3.5 shrink-0" />
+                <span>Guest quizzes are not saved after playing.</span>
+              </div>
+            )}
           </div>
 
           {/* Creation Tabs */}
@@ -1149,14 +1197,32 @@ export default function Quiz() {
             ))}
 
             {/* Save & Play CTA */}
-            <div className="pt-4 flex justify-end gap-3">
+            <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-zinc-200 dark:border-zinc-800 pt-6">
+              {!user ? (
+                <p className="text-xs text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1.5">
+                  <Info className="h-4 w-4 shrink-0" />
+                  <span>
+                    Guest Mode: This quiz will play in this session, but won&apos;t be saved after you leave.{" "}
+                    <button
+                      type="button"
+                      onClick={() => openAuthModal("login")}
+                      className="underline font-bold hover:text-amber-700"
+                    >
+                      Sign in to save it
+                    </button>
+                    .
+                  </span>
+                </p>
+              ) : (
+                <div />
+              )}
               <Button
                 size="lg"
                 onClick={handleSaveQuiz}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-2 px-8 shadow-lg active:scale-95"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-2 px-8 shadow-lg active:scale-95 w-full sm:w-auto shrink-0"
               >
                 <CheckCircle className="h-5 w-5" />
-                <span>Save &amp; Play Quiz Now</span>
+                <span>{user ? "Save & Play Quiz Now" : "Launch Guest Game (Not Saved)"}</span>
               </Button>
             </div>
           </div>

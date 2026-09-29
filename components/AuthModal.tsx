@@ -8,7 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Sparkles, Mail, Lock, User as UserIcon } from "lucide-react";
 
 export function AuthModal() {
-  const { isAuthModalOpen, closeAuthModal, authMode, openAuthModal, signInWithEmail, signUpWithEmail, loginAsGuest } =
+  const { isAuthModalOpen, closeAuthModal, authMode, openAuthModal, signInWithEmail, signUpWithEmail } =
     useAuth();
 
   const [email, setEmail] = useState("");
@@ -105,26 +105,6 @@ export function AuthModal() {
             {submitting ? "Please wait..." : authMode === "login" ? "Sign In" : "Sign Up"}
           </Button>
 
-          <div className="relative my-4">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-zinc-200 dark:border-zinc-800" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white dark:bg-zinc-900 px-3 text-zinc-400 font-semibold">
-                Or quick test
-              </span>
-            </div>
-          </div>
-
-          <Button
-            type="button"
-            variant="outline"
-            onClick={loginAsGuest}
-            className="w-full flex items-center justify-center gap-2 border-dashed border-zinc-300 dark:border-zinc-700 hover:border-blue-500"
-          >
-            <Sparkles className="h-4 w-4 text-amber-500" />
-            <span>Continue as Instant Guest</span>
-          </Button>
         </form>
 
         <div className="mt-5 text-center text-xs text-zinc-500">
