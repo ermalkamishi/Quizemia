@@ -128,10 +128,6 @@ export default function MyQuizzes() {
               </Button>
             </Link>
           </div>
-
-          <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 text-xs text-zinc-400">
-            ✨ Free cloud sync, permanent quiz storage &amp; points leaderboard.
-          </div>
         </motion.div>
       </div>
     );
@@ -226,10 +222,10 @@ export default function MyQuizzes() {
             const questionCount = quiz.questions?.length || 1;
             const formattedDate = quiz.created_at
               ? new Date(quiz.created_at).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                })
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })
               : "Recently";
 
             return (

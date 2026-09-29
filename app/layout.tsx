@@ -22,6 +22,11 @@ export const metadata: Metadata = {
   title: "Quizemia — Turn lessons into play!",
   description:
     "Turn lessons into play! An interactive educational quiz platform inspired by Kahoot. Generate quizzes, compete with friends, and master any subject.",
+  icons: {
+    icon: "/quiz.png",
+    shortcut: "/quiz.png",
+    apple: "/quiz.png",
+  },
 };
 
 export default function RootLayout({
