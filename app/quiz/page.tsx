@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Quiz from "@/components/Quiz";
 
 export const metadata: Metadata = {
-  title: "Quiz Arena & Studio — Quizemia",
+  title: "Quizemia — Turn lessons into play!",
   description: "Play interactive Kahoot-style quizzes or generate questions with AI.",
 };
 
