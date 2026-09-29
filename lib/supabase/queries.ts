@@ -3,6 +3,7 @@ import { Quiz, Question, CreateQuizInput } from "@/types/quiz";
 
 // Resilient default seed data in case Supabase table hasn't been migrated yet
 export const DEFAULT_PUBLIC_QUIZZES: Quiz[] = [
+  // 1. Geography
   {
     id: "11111111-1111-1111-1111-111111111111",
     title: "World Geography & Epic Wonders",
@@ -11,8 +12,8 @@ export const DEFAULT_PUBLIC_QUIZZES: Quiz[] = [
     creator_email: "Quizemia Official",
     is_public: true,
     cover_image: "https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?auto=format&fit=crop&w=800&q=80",
-    play_count: 248,
-    created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
+    play_count: 342,
+    created_at: new Date(Date.now() - 86400000 * 5).toISOString(),
     questions: [
       {
         question_text: "Which is the largest ocean on Planet Earth?",
@@ -51,8 +52,46 @@ export const DEFAULT_PUBLIC_QUIZZES: Quiz[] = [
           { id: "d", text: "Africa", is_correct: true, color: "green", shape: "square" },
         ],
       },
+      {
+        question_text: "What is recognized as the longest river in the world?",
+        time_limit: 20,
+        points: 1000,
+        order_index: 3,
+        options: [
+          { id: "a", text: "Amazon River", is_correct: false, color: "red", shape: "triangle" },
+          { id: "b", text: "Nile River", is_correct: true, color: "blue", shape: "diamond" },
+          { id: "c", text: "Yangtze River", is_correct: false, color: "yellow", shape: "circle" },
+          { id: "d", text: "Mississippi River", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "Which country has the highest total number of natural lakes in the world?",
+        time_limit: 20,
+        points: 1000,
+        order_index: 4,
+        options: [
+          { id: "a", text: "Canada", is_correct: true, color: "red", shape: "triangle" },
+          { id: "b", text: "Russia", is_correct: false, color: "blue", shape: "diamond" },
+          { id: "c", text: "United States", is_correct: false, color: "yellow", shape: "circle" },
+          { id: "d", text: "Finland", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "The ancient rock-carved city of Petra is located in which modern nation?",
+        time_limit: 20,
+        points: 1000,
+        order_index: 5,
+        options: [
+          { id: "a", text: "Egypt", is_correct: false, color: "red", shape: "triangle" },
+          { id: "b", text: "Greece", is_correct: false, color: "blue", shape: "diamond" },
+          { id: "c", text: "Jordan", is_correct: true, color: "yellow", shape: "circle" },
+          { id: "d", text: "Turkey", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
     ],
   },
+
+  // 2. Science: Space & Astrophysics
   {
     id: "22222222-2222-2222-2222-222222222222",
     title: "Cosmic Odyssey & Astrophysics",
@@ -61,7 +100,7 @@ export const DEFAULT_PUBLIC_QUIZZES: Quiz[] = [
     creator_email: "Quizemia Official",
     is_public: true,
     cover_image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=800&q=80",
-    play_count: 184,
+    play_count: 279,
     created_at: new Date(Date.now() - 86400000 * 4).toISOString(),
     questions: [
       {
@@ -89,8 +128,58 @@ export const DEFAULT_PUBLIC_QUIZZES: Quiz[] = [
           { id: "d", text: "Pulsar", is_correct: false, color: "green", shape: "square" },
         ],
       },
+      {
+        question_text: "Approximately how long does sunlight take to reach Planet Earth?",
+        time_limit: 15,
+        points: 1000,
+        order_index: 2,
+        options: [
+          { id: "a", text: "Instantaneous", is_correct: false, color: "red", shape: "triangle" },
+          { id: "b", text: "30 seconds", is_correct: false, color: "blue", shape: "diamond" },
+          { id: "c", text: "8 minutes and 20 seconds", is_correct: true, color: "yellow", shape: "circle" },
+          { id: "d", text: "1 hour", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "What is the closest known star system to our Solar System?",
+        time_limit: 20,
+        points: 1000,
+        order_index: 3,
+        options: [
+          { id: "a", text: "Sirius", is_correct: false, color: "red", shape: "triangle" },
+          { id: "b", text: "Alpha Centauri", is_correct: true, color: "blue", shape: "diamond" },
+          { id: "c", text: "Betelgeuse", is_correct: false, color: "yellow", shape: "circle" },
+          { id: "d", text: "Polaris", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "Which moon in our solar system is famous for having over 400 active volcanoes?",
+        time_limit: 20,
+        points: 1000,
+        order_index: 4,
+        options: [
+          { id: "a", text: "Io (Jupiter)", is_correct: true, color: "red", shape: "triangle" },
+          { id: "b", text: "Titan (Saturn)", is_correct: false, color: "blue", shape: "diamond" },
+          { id: "c", text: "Europa (Jupiter)", is_correct: false, color: "yellow", shape: "circle" },
+          { id: "d", text: "Our Moon", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "What astronomical event marks the explosive death of a supermassive star?",
+        time_limit: 15,
+        points: 1000,
+        order_index: 5,
+        options: [
+          { id: "a", text: "Solar Flare", is_correct: false, color: "red", shape: "triangle" },
+          { id: "b", text: "Cosmic Ray", is_correct: false, color: "blue", shape: "diamond" },
+          { id: "c", text: "Supernova", is_correct: true, color: "yellow", shape: "circle" },
+          { id: "d", text: "Nebula Pulse", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
     ],
   },
+
+  // 3. Technology: AI & Computing
   {
     id: "33333333-3333-3333-3333-333333333333",
     title: "AI Revolution & Next-Gen Computing",
@@ -99,8 +188,8 @@ export const DEFAULT_PUBLIC_QUIZZES: Quiz[] = [
     creator_email: "Quizemia Official",
     is_public: true,
     cover_image: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80",
-    play_count: 312,
-    created_at: new Date(Date.now() - 86400000 * 1).toISOString(),
+    play_count: 418,
+    created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
     questions: [
       {
         question_text: "What does the 'T' stand for in the popular LLM architecture 'GPT'?",
@@ -112,6 +201,402 @@ export const DEFAULT_PUBLIC_QUIZZES: Quiz[] = [
           { id: "b", text: "Tokenizer", is_correct: false, color: "blue", shape: "diamond" },
           { id: "c", text: "Transformer", is_correct: true, color: "yellow", shape: "circle" },
           { id: "d", text: "Tensor", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "Which pioneer formulated the standard 'Imitation Game' to evaluate machine intelligence?",
+        time_limit: 20,
+        points: 1000,
+        order_index: 1,
+        options: [
+          { id: "a", text: "Alan Turing", is_correct: true, color: "red", shape: "triangle" },
+          { id: "b", text: "John von Neumann", is_correct: false, color: "blue", shape: "diamond" },
+          { id: "c", text: "Claude Shannon", is_correct: false, color: "yellow", shape: "circle" },
+          { id: "d", text: "Ada Lovelace", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "In deep neural networks, what technique calculates parameter weight gradients backwards?",
+        time_limit: 20,
+        points: 1000,
+        order_index: 2,
+        options: [
+          { id: "a", text: "Forward Propagation", is_correct: false, color: "red", shape: "triangle" },
+          { id: "b", text: "Backpropagation", is_correct: true, color: "blue", shape: "diamond" },
+          { id: "c", text: "Dropout Pruning", is_correct: false, color: "yellow", shape: "circle" },
+          { id: "d", text: "Stochastic Sampling", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "What paradigm trains autonomous agents using positive rewards and negative penalties?",
+        time_limit: 20,
+        points: 1000,
+        order_index: 3,
+        options: [
+          { id: "a", text: "Unsupervised Clustering", is_correct: false, color: "red", shape: "triangle" },
+          { id: "b", text: "Supervised Classification", is_correct: false, color: "blue", shape: "diamond" },
+          { id: "c", text: "Reinforcement Learning", is_correct: true, color: "yellow", shape: "circle" },
+          { id: "d", text: "Linear Regression", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "Which IBM supercomputer famously defeated world chess champion Garry Kasparov in 1997?",
+        time_limit: 15,
+        points: 1000,
+        order_index: 4,
+        options: [
+          { id: "a", text: "Deep Blue", is_correct: true, color: "red", shape: "triangle" },
+          { id: "b", text: "Watson", is_correct: false, color: "blue", shape: "diamond" },
+          { id: "c", text: "AlphaGo", is_correct: false, color: "yellow", shape: "circle" },
+          { id: "d", text: "ENIAC", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "In artificial neurons, what mathematical function introduces non-linearity to output values?",
+        time_limit: 20,
+        points: 1000,
+        order_index: 5,
+        options: [
+          { id: "a", text: "Loss Gradient", is_correct: false, color: "red", shape: "triangle" },
+          { id: "b", text: "Activation Function", is_correct: true, color: "blue", shape: "diamond" },
+          { id: "c", text: "Vector Embedding", is_correct: false, color: "yellow", shape: "circle" },
+          { id: "d", text: "Epoch Counter", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+    ],
+  },
+
+  // 4. History: Ancient Civilizations
+  {
+    id: "44444444-4444-4444-4444-444444444444",
+    title: "Ancient Civilizations & World Empires",
+    description: "Journey through the Pharaohs, Spartan warriors, Roman emperors, and ancient wonders.",
+    category: "History",
+    creator_email: "Quizemia Official",
+    is_public: true,
+    cover_image: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=800&q=80",
+    play_count: 215,
+    created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
+    questions: [
+      {
+        question_text: "Which civilization engineered the colossal Great Pyramids of Giza along the Nile?",
+        time_limit: 15,
+        points: 1000,
+        order_index: 0,
+        options: [
+          { id: "a", text: "Ancient Egyptians", is_correct: true, color: "red", shape: "triangle" },
+          { id: "b", text: "Mesopotamians", is_correct: false, color: "blue", shape: "diamond" },
+          { id: "c", text: "Phoenicians", is_correct: false, color: "yellow", shape: "circle" },
+          { id: "d", text: "Persians", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "Which Macedonian king conquered Persia and built a vast empire spanning three continents before age 30?",
+        time_limit: 20,
+        points: 1000,
+        order_index: 1,
+        options: [
+          { id: "a", text: "Julius Caesar", is_correct: false, color: "red", shape: "triangle" },
+          { id: "b", text: "Alexander the Great", is_correct: true, color: "blue", shape: "diamond" },
+          { id: "c", text: "Cyrus the Great", is_correct: false, color: "yellow", shape: "circle" },
+          { id: "d", text: "Pericles", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "What famous ancient trade route connected the Han Dynasty in China with the Mediterranean world?",
+        time_limit: 15,
+        points: 1000,
+        order_index: 2,
+        options: [
+          { id: "a", text: "The Spice Trail", is_correct: false, color: "red", shape: "triangle" },
+          { id: "b", text: "The Royal Road", is_correct: false, color: "blue", shape: "diamond" },
+          { id: "c", text: "The Silk Road", is_correct: true, color: "yellow", shape: "circle" },
+          { id: "d", text: "The Amber Route", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "Which ancient Babylonian legal code is celebrated for the principle 'an eye for an eye'?",
+        time_limit: 20,
+        points: 1000,
+        order_index: 3,
+        options: [
+          { id: "a", text: "Code of Hammurabi", is_correct: true, color: "red", shape: "triangle" },
+          { id: "b", text: "Justinian Code", is_correct: false, color: "blue", shape: "diamond" },
+          { id: "c", text: "Twelve Tables", is_correct: false, color: "yellow", shape: "circle" },
+          { id: "d", text: "Draconian Constitution", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "In which Greek city-state was direct citizen democracy first established and practiced?",
+        time_limit: 15,
+        points: 1000,
+        order_index: 4,
+        options: [
+          { id: "a", text: "Sparta", is_correct: false, color: "red", shape: "triangle" },
+          { id: "b", text: "Athens", is_correct: true, color: "blue", shape: "diamond" },
+          { id: "c", text: "Corinth", is_correct: false, color: "yellow", shape: "circle" },
+          { id: "d", text: "Thebes", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "In what year was the historic Magna Carta signed in England, limiting royal authority?",
+        time_limit: 20,
+        points: 1000,
+        order_index: 5,
+        options: [
+          { id: "a", text: "1066", is_correct: false, color: "red", shape: "triangle" },
+          { id: "b", text: "1492", is_correct: false, color: "blue", shape: "diamond" },
+          { id: "c", text: "1215", is_correct: true, color: "yellow", shape: "circle" },
+          { id: "d", text: "1776", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+    ],
+  },
+
+  // 5. Pop Culture & Movies
+  {
+    id: "55555555-5555-5555-5555-555555555555",
+    title: "Pop Culture & Blockbuster Cinema",
+    description: "Test your movie buffs and music lore across epic franchises, Oscar winners, and iconic chart-toppers.",
+    category: "Pop Culture",
+    creator_email: "Quizemia Official",
+    is_public: true,
+    cover_image: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=800&q=80",
+    play_count: 367,
+    created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
+    questions: [
+      {
+        question_text: "In the Star Wars saga, what is the name of Han Solo and Chewbacca's legendary freighter?",
+        time_limit: 15,
+        points: 1000,
+        order_index: 0,
+        options: [
+          { id: "a", text: "Millennium Falcon", is_correct: true, color: "red", shape: "triangle" },
+          { id: "b", text: "Star Destroyer", is_correct: false, color: "blue", shape: "diamond" },
+          { id: "c", text: "X-Wing Starfighter", is_correct: false, color: "yellow", shape: "circle" },
+          { id: "d", text: "Razor Crest", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "Which actor kicked off the Marvel Cinematic Universe in 2008 portraying Tony Stark / Iron Man?",
+        time_limit: 15,
+        points: 1000,
+        order_index: 1,
+        options: [
+          { id: "a", text: "Chris Evans", is_correct: false, color: "red", shape: "triangle" },
+          { id: "b", text: "Robert Downey Jr.", is_correct: true, color: "blue", shape: "diamond" },
+          { id: "c", text: "Mark Ruffalo", is_correct: false, color: "yellow", shape: "circle" },
+          { id: "d", text: "Chris Hemsworth", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "Which South Korean masterpiece became the first non-English language film to win Best Picture at the Oscars?",
+        time_limit: 20,
+        points: 1000,
+        order_index: 2,
+        options: [
+          { id: "a", text: "Train to Busan", is_correct: false, color: "red", shape: "triangle" },
+          { id: "b", text: "The Handmaiden", is_correct: false, color: "blue", shape: "diamond" },
+          { id: "c", text: "Parasite", is_correct: true, color: "yellow", shape: "circle" },
+          { id: "d", text: "Oldboy", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "In 'The Lord of the Rings', into which volcanic mountain must the One Ring be cast to be unmade?",
+        time_limit: 15,
+        points: 1000,
+        order_index: 3,
+        options: [
+          { id: "a", text: "Mount Doom (Orodruin)", is_correct: true, color: "red", shape: "triangle" },
+          { id: "b", text: "Misty Mountains", is_correct: false, color: "blue", shape: "diamond" },
+          { id: "c", text: "Erebor", is_correct: false, color: "yellow", shape: "circle" },
+          { id: "d", text: "Weathertop", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "Who produced and released 'Thriller', the certified best-selling album in worldwide music history?",
+        time_limit: 15,
+        points: 1000,
+        order_index: 4,
+        options: [
+          { id: "a", text: "Prince", is_correct: false, color: "red", shape: "triangle" },
+          { id: "b", text: "Michael Jackson", is_correct: true, color: "blue", shape: "diamond" },
+          { id: "c", text: "Stevie Wonder", is_correct: false, color: "yellow", shape: "circle" },
+          { id: "d", text: "David Bowie", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "What majestic creature serves as the symbol and house crest of Gryffindor in Harry Potter?",
+        time_limit: 15,
+        points: 1000,
+        order_index: 5,
+        options: [
+          { id: "a", text: "Eagle", is_correct: false, color: "red", shape: "triangle" },
+          { id: "b", text: "Badger", is_correct: false, color: "blue", shape: "diamond" },
+          { id: "c", text: "Lion", is_correct: true, color: "yellow", shape: "circle" },
+          { id: "d", text: "Serpent", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+    ],
+  },
+
+  // 6. Science: Human Body & Anatomy
+  {
+    id: "66666666-6666-6666-6666-666666666666",
+    title: "Human Body & Biological Wonders",
+    description: "Discover organs, genetic codes, neural pathways, and physiological wonders of the human organism.",
+    category: "Science",
+    creator_email: "Quizemia Official",
+    is_public: true,
+    cover_image: "https://images.unsplash.com/photo-1532938911079-1b06ac7ceec7?auto=format&fit=crop&w=800&q=80",
+    play_count: 295,
+    created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
+    questions: [
+      {
+        question_text: "What cellular organelle is universally referred to as the powerhouse of eukaryotic cells?",
+        time_limit: 15,
+        points: 1000,
+        order_index: 0,
+        options: [
+          { id: "a", text: "Mitochondria", is_correct: true, color: "red", shape: "triangle" },
+          { id: "b", text: "Ribosome", is_correct: false, color: "blue", shape: "diamond" },
+          { id: "c", text: "Golgi Apparatus", is_correct: false, color: "yellow", shape: "circle" },
+          { id: "d", text: "Endoplasmic Reticulum", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "What is the largest internal solid organ in the human body?",
+        time_limit: 15,
+        points: 1000,
+        order_index: 1,
+        options: [
+          { id: "a", text: "Lungs", is_correct: false, color: "red", shape: "triangle" },
+          { id: "b", text: "Liver", is_correct: true, color: "blue", shape: "diamond" },
+          { id: "c", text: "Brain", is_correct: false, color: "yellow", shape: "circle" },
+          { id: "d", text: "Heart", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "Which blood vessels are responsible for carrying oxygen-rich blood away from the heart?",
+        time_limit: 20,
+        points: 1000,
+        order_index: 2,
+        options: [
+          { id: "a", text: "Veins", is_correct: false, color: "red", shape: "triangle" },
+          { id: "b", text: "Capillaries", is_correct: false, color: "blue", shape: "diamond" },
+          { id: "c", text: "Arteries", is_correct: true, color: "yellow", shape: "circle" },
+          { id: "d", text: "Venules", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "How many total bones make up a mature adult human skeletal system?",
+        time_limit: 15,
+        points: 1000,
+        order_index: 3,
+        options: [
+          { id: "a", text: "206", is_correct: true, color: "red", shape: "triangle" },
+          { id: "b", text: "240", is_correct: false, color: "blue", shape: "diamond" },
+          { id: "c", text: "185", is_correct: false, color: "yellow", shape: "circle" },
+          { id: "d", text: "300", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "What macromolecule carries hereditary genetic instructions across all known living organisms?",
+        time_limit: 15,
+        points: 1000,
+        order_index: 4,
+        options: [
+          { id: "a", text: "Insulin", is_correct: false, color: "red", shape: "triangle" },
+          { id: "b", text: "DNA (Deoxyribonucleic Acid)", is_correct: true, color: "blue", shape: "diamond" },
+          { id: "c", text: "Hemoglobin", is_correct: false, color: "yellow", shape: "circle" },
+          { id: "d", text: "ATP", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "Which brain structure is primarily in charge of motor balance, precision coordination, and posture?",
+        time_limit: 20,
+        points: 1000,
+        order_index: 5,
+        options: [
+          { id: "a", text: "Amygdala", is_correct: false, color: "red", shape: "triangle" },
+          { id: "b", text: "Hippocampus", is_correct: false, color: "blue", shape: "diamond" },
+          { id: "c", text: "Cerebellum", is_correct: true, color: "yellow", shape: "circle" },
+          { id: "d", text: "Brainstem", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+    ],
+  },
+
+  // 7. General Knowledge: Inventions & Milestones
+  {
+    id: "77777777-7777-7777-7777-777777777777",
+    title: "Great Inventions & World Milestones",
+    description: "From the printing press to the lunar landing—celebrating humanity's greatest scientific leaps.",
+    category: "General",
+    creator_email: "Quizemia Official",
+    is_public: true,
+    cover_image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=800&q=80",
+    play_count: 254,
+    created_at: new Date(Date.now() - 86400000 * 1).toISOString(),
+    questions: [
+      {
+        question_text: "Who pioneered movable-type mechanical printing in Europe around 1440?",
+        time_limit: 15,
+        points: 1000,
+        order_index: 0,
+        options: [
+          { id: "a", text: "Johannes Gutenberg", is_correct: true, color: "red", shape: "triangle" },
+          { id: "b", text: "Leonardo da Vinci", is_correct: false, color: "blue", shape: "diamond" },
+          { id: "c", text: "Galileo Galilei", is_correct: false, color: "yellow", shape: "circle" },
+          { id: "d", text: "Benjamin Franklin", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "Sir Alexander Fleming discovered which revolutionary antibiotic substance in 1928?",
+        time_limit: 15,
+        points: 1000,
+        order_index: 1,
+        options: [
+          { id: "a", text: "Aspirin", is_correct: false, color: "red", shape: "triangle" },
+          { id: "b", text: "Penicillin", is_correct: true, color: "blue", shape: "diamond" },
+          { id: "c", text: "Morphine", is_correct: false, color: "yellow", shape: "circle" },
+          { id: "d", text: "Insulin", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "In what landmark year did Apollo 11 land Neil Armstrong and Buzz Aldrin on the surface of the Moon?",
+        time_limit: 15,
+        points: 1000,
+        order_index: 2,
+        options: [
+          { id: "a", text: "1965", is_correct: false, color: "red", shape: "triangle" },
+          { id: "b", text: "1972", is_correct: false, color: "blue", shape: "diamond" },
+          { id: "c", text: "1969", is_correct: true, color: "yellow", shape: "circle" },
+          { id: "d", text: "1959", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "Who formulated the universal laws of gravitation and classical mechanics in 'Principia Mathematica'?",
+        time_limit: 20,
+        points: 1000,
+        order_index: 3,
+        options: [
+          { id: "a", text: "Sir Isaac Newton", is_correct: true, color: "red", shape: "triangle" },
+          { id: "b", text: "Albert Einstein", is_correct: false, color: "blue", shape: "diamond" },
+          { id: "c", text: "Nikola Tesla", is_correct: false, color: "yellow", shape: "circle" },
+          { id: "d", text: "Michael Faraday", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "Which British scientist invented the World Wide Web in 1989 while working at CERN?",
+        time_limit: 15,
+        points: 1000,
+        order_index: 4,
+        options: [
+          { id: "a", text: "Vint Cerf", is_correct: false, color: "red", shape: "triangle" },
+          { id: "b", text: "Tim Berners-Lee", is_correct: true, color: "blue", shape: "diamond" },
+          { id: "c", text: "Linus Torvalds", is_correct: false, color: "yellow", shape: "circle" },
+          { id: "d", text: "Steve Wozniak", is_correct: false, color: "green", shape: "square" },
         ],
       },
     ],
