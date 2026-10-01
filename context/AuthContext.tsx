@@ -66,10 +66,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithEmail = async (email: string, pass: string) => {
     try {
       const cleanEmail = email.trim().toLowerCase();
-      const { data, error } = await supabase.auth.signInWithPassword({
+      let { data, error } = await supabase.auth.signInWithPassword({
         email: cleanEmail,
         password: pass,
       });
+
+      // If user is unconfirmed, automatically trigger server-side confirmation and retry sign in
+      if (error && error.message.toLowerCase().includes("email not confirmed")) {
+        try {
+          const autoConfirmRes = await fetch("/api/auth/auto-confirm", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: cleanEmail }),
+          });
+          if (autoConfirmRes.ok) {
+            // Retry login now that account has been confirmed
+            const retry = await supabase.auth.signInWithPassword({
+              email: cleanEmail,
+              password: pass,
+            });
+            if (!retry.error) {
+              closeAuthModal();
+              return { data: retry.data };
+            }
+          }
+        } catch {
+          // ignore auto-confirm error and fallback to standard error
+        }
+      }
+
       if (error) return { error: error.message };
       closeAuthModal();
       return { data };
@@ -83,35 +108,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const cleanEmail = email.trim().toLowerCase();
       const cleanNickname = nickname?.trim() || cleanEmail.split("@")[0];
 
-      const { data, error } = await supabase.auth.signUp({
-        email: cleanEmail,
-        password: pass,
-        options: {
-          data: {
-            nickname: cleanNickname,
-            name: cleanNickname,
-            display_name: cleanNickname,
-          },
-        },
+      // Call server registration API which creates user with email_confirm: true
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: cleanEmail,
+          password: pass,
+          nickname: cleanNickname,
+        }),
       });
 
-      if (error) return { error: error.message };
-
-      // Supabase returns empty identities array if user with this email already exists and email enumeration protection is on
-      if (data.user?.identities && data.user.identities.length === 0) {
-        return { error: "An account with this email already exists. Please sign in instead." };
+      const json = await res.json();
+      if (!res.ok) {
+        return { error: json.error || "Failed to create account" };
       }
 
-      // If Supabase requires email verification and didn't start a session immediately
-      if (data.user && !data.session) {
-        return {
-          needsEmailConfirmation: true,
-          data,
-        };
+      // Automatically sign in the user immediately so session is created
+      const signInRes = await supabase.auth.signInWithPassword({
+        email: cleanEmail,
+        password: pass,
+      });
+
+      if (signInRes.error) {
+        return { data: json.user };
       }
 
       closeAuthModal();
-      return { data };
+      return { data: signInRes.data };
     } catch (err: unknown) {
       return { error: err instanceof Error ? err.message : "Failed to sign up" };
     }

@@ -66,6 +66,33 @@ export function AuthModal() {
     openAuthModal(mode);
   };
 
+  const formatAuthError = (err: string): string => {
+    const lower = err.toLowerCase();
+    if (language === "al") {
+      if (lower.includes("invalid login credentials")) {
+        return "Email ose fjalëkalimi është i pasaktë. Ju lutem provoni përsëri.";
+      }
+      if (lower.includes("email not confirmed")) {
+        return "Email nuk është konfirmuar. Po përpiqemi ta konfirmojmë automatikisht, ju lutem provoni sërish pas pak sekondash.";
+      }
+      if (lower.includes("already registered") || lower.includes("already exists")) {
+        return "Një llogari me këtë email tashmë ekziston. Ju lutem hyni në llogari.";
+      }
+      if (lower.includes("password should be at least")) {
+        return "Fjalëkalimi duhet të ketë të paktën 6 karaktere.";
+      }
+      if (lower.includes("rate limit") || lower.includes("too many requests")) {
+        return "Keni bërë shumë kërkesa. Ju lutem prisni një moment para se të provoni përsëri.";
+      }
+      return err;
+    }
+
+    if (lower.includes("invalid login credentials")) {
+      return "Invalid email or password. Please check your credentials.";
+    }
+    return err;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
@@ -76,32 +103,56 @@ export function AuthModal() {
     // Validation for Signup
     if (authMode === "signup") {
       if (!cleanNickname) {
-        setErrorMsg("Please enter a nickname for your Quizemia profile.");
+        setErrorMsg(
+          language === "al"
+            ? "Ju lutem shkruani një nofkë për profilin tuaj në Quizemia."
+            : "Please enter a nickname for your Quizemia profile."
+        );
         return;
       }
       if (cleanNickname.length < 2) {
-        setErrorMsg("Nickname must be at least 2 characters.");
+        setErrorMsg(
+          language === "al"
+            ? "Nofka duhet të ketë të paktën 2 karaktere."
+            : "Nickname must be at least 2 characters."
+        );
         return;
       }
       if (cleanNickname.length > 25) {
-        setErrorMsg("Nickname must be 25 characters or fewer.");
+        setErrorMsg(
+          language === "al"
+            ? "Nofka nuk mund të jetë më e gjatë se 25 karaktere."
+            : "Nickname must be 25 characters or fewer."
+        );
         return;
       }
     }
 
     // Common validations
     if (!cleanEmail) {
-      setErrorMsg("Please enter your email address.");
+      setErrorMsg(
+        language === "al"
+          ? "Ju lutem vendosni adresën tuaj të email-it."
+          : "Please enter your email address."
+      );
       return;
     }
 
     if (!password) {
-      setErrorMsg("Please enter your password.");
+      setErrorMsg(
+        language === "al"
+          ? "Ju lutem vendosni fjalëkalimin tuaj."
+          : "Please enter your password."
+      );
       return;
     }
 
     if (password.length < 6) {
-      setErrorMsg("Password must be at least 6 characters.");
+      setErrorMsg(
+        language === "al"
+          ? "Fjalëkalimi duhet të ketë të paktën 6 karaktere."
+          : "Password must be at least 6 characters."
+      );
       return;
     }
 
@@ -112,7 +163,7 @@ export function AuthModal() {
       setSubmitting(false);
 
       if (res.error) {
-        setErrorMsg(res.error);
+        setErrorMsg(formatAuthError(res.error));
       } else {
         resetForm();
       }
@@ -121,7 +172,7 @@ export function AuthModal() {
       setSubmitting(false);
 
       if (res.error) {
-        setErrorMsg(res.error);
+        setErrorMsg(formatAuthError(res.error));
       } else if (res.needsEmailConfirmation) {
         setNeedsConfirmation(true);
       } else {
