@@ -601,6 +601,182 @@ export const DEFAULT_PUBLIC_QUIZZES: Quiz[] = [
       },
     ],
   },
+
+  // 8. Albanian History, Geography & Culture (Shqip)
+  {
+    id: "88888888-8888-8888-8888-888888888888",
+    title: "Gjeografia, Historia & Kultura Shqiptare",
+    description: "Një kuiz magjepsës mbi qytetet historike, natyrën e mrekullueshme dhe trashëgiminë e lavdishme shqiptare.",
+    category: "History",
+    language: "al",
+    creator_email: "Quizemia Official",
+    is_public: true,
+    cover_image: "https://images.unsplash.com/photo-1596701062351-8c2c14d1fdd1?auto=format&fit=crop&w=800&q=80",
+    play_count: 312,
+    created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
+    questions: [
+      {
+        question_text: "Cili është qyteti historik i Shqipërisë ku u shpall Pavarësia Kombëtare më 28 Nëntor 1912?",
+        time_limit: 15,
+        points: 1000,
+        order_index: 0,
+        options: [
+          { id: "a", text: "Vlora", is_correct: true, color: "red", shape: "triangle" },
+          { id: "b", text: "Tirana", is_correct: false, color: "blue", shape: "diamond" },
+          { id: "c", text: "Durrësi", is_correct: false, color: "yellow", shape: "circle" },
+          { id: "d", text: "Shkodra", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "Cili hero kombëtar udhëhoqi me sukses qëndresën e shqiptarëve kundër Perandorisë Osmane në shekullin XV?",
+        time_limit: 15,
+        points: 1000,
+        order_index: 1,
+        options: [
+          { id: "a", text: "Ismail Qemali", is_correct: false, color: "red", shape: "triangle" },
+          { id: "b", text: "Gjergj Kastrioti Skënderbeu", is_correct: true, color: "blue", shape: "diamond" },
+          { id: "c", text: "Dedë Gjo Luli", is_correct: false, color: "yellow", shape: "circle" },
+          { id: "d", text: "Isa Boletini", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "Cili liqen është një nga liqenet më të thella dhe më të lashta në Evropë, nën mbrojtjen e UNESCO-s?",
+        time_limit: 20,
+        points: 1000,
+        order_index: 2,
+        options: [
+          { id: "a", text: "Liqeni i Shkodrës", is_correct: false, color: "red", shape: "triangle" },
+          { id: "b", text: "Liqeni i Prespës", is_correct: false, color: "blue", shape: "diamond" },
+          { id: "c", text: "Liqeni i Ohrit", is_correct: true, color: "yellow", shape: "circle" },
+          { id: "d", text: "Liqeni i Fierzës", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "Qyteti historik i Beratit njihet ndërkombëtarisht me cilin emërtim tradicional?",
+        time_limit: 15,
+        points: 1000,
+        order_index: 3,
+        options: [
+          { id: "a", text: "Qyteti i Gurtë", is_correct: false, color: "red", shape: "triangle" },
+          { id: "b", text: "Qyteti i Serenatave", is_correct: false, color: "blue", shape: "diamond" },
+          { id: "c", text: "Qyteti i Trëndafilave", is_correct: false, color: "yellow", shape: "circle" },
+          { id: "d", text: "Qyteti i Një mbi Një Dritareve", is_correct: true, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "Cili alfabet u vendos dhe u unifikua përfundimisht në Kongresin historik të Manastirit në vitin 1908?",
+        time_limit: 20,
+        points: 1000,
+        order_index: 4,
+        options: [
+          { id: "a", text: "Alfabeti Latin me 36 shkronja", is_correct: true, color: "red", shape: "triangle" },
+          { id: "b", text: "Alfabeti Cirilik", is_correct: false, color: "blue", shape: "diamond" },
+          { id: "c", text: "Alfabeti Grek", is_correct: false, color: "yellow", shape: "circle" },
+          { id: "d", text: "Alfabeti Arab", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "Cili lumë i Shqipërisë u shpall Parku i Parë Kombëtar i një Lumi të Egër në të gjithë Evropën?",
+        time_limit: 15,
+        points: 1000,
+        order_index: 5,
+        options: [
+          { id: "a", text: "Drini", is_correct: false, color: "red", shape: "triangle" },
+          { id: "b", text: "Vjosa", is_correct: true, color: "blue", shape: "diamond" },
+          { id: "c", text: "Shkumbini", is_correct: false, color: "yellow", shape: "circle" },
+          { id: "d", text: "Semani", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+    ],
+  },
+
+  // 9. Macedonian Culture, Nature & History (Македонски)
+  {
+    id: "99999999-9999-9999-9999-999999999999",
+    title: "Македонска Култура, Природа & Историја",
+    description: "Проверете го вашето знаење за македонските езера, знаменитости, историски личности и културно наследство.",
+    category: "History",
+    language: "mk",
+    creator_email: "Quizemia Official",
+    is_public: true,
+    cover_image: "https://images.unsplash.com/photo-1590483253724-c187bc970632?auto=format&fit=crop&w=800&q=80",
+    play_count: 289,
+    created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
+    questions: [
+      {
+        question_text: "Кое езеро во Македонија се смета за едно од најстарите и најдлабоките езера во Европа под заштита на УНЕСКО?",
+        time_limit: 15,
+        points: 1000,
+        order_index: 0,
+        options: [
+          { id: "a", text: "Охридско Езеро", is_correct: true, color: "red", shape: "triangle" },
+          { id: "b", text: "Преспанско Езеро", is_correct: false, color: "blue", shape: "diamond" },
+          { id: "c", text: "Дојранско Езеро", is_correct: false, color: "yellow", shape: "circle" },
+          { id: "d", text: "Мавровско Езеро", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "Кој е највисокиот планински врв во Република Македонија со височина од 2.764 метри?",
+        time_limit: 15,
+        points: 1000,
+        order_index: 1,
+        options: [
+          { id: "a", text: "Титов Врв", is_correct: false, color: "red", shape: "triangle" },
+          { id: "b", text: "Голем Кораб", is_correct: true, color: "blue", shape: "diamond" },
+          { id: "c", text: "Пелистер", is_correct: false, color: "yellow", shape: "circle" },
+          { id: "d", text: "Солунска Глава", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "Која светски позната хуманитарка и нобеловка за мир е родена во Скопје во 1910 година?",
+        time_limit: 15,
+        points: 1000,
+        order_index: 2,
+        options: [
+          { id: "a", text: "Марија Кири", is_correct: false, color: "red", shape: "triangle" },
+          { id: "b", text: "Флоренс Најтингел", is_correct: false, color: "blue", shape: "diamond" },
+          { id: "c", text: "Мајка Тереза", is_correct: true, color: "yellow", shape: "circle" },
+          { id: "d", text: "Елеонор Рузвелт", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "Како се нарекува познатиот македонски традиционален гастрономски специјалитет од печени црвени пиперки?",
+        time_limit: 15,
+        points: 1000,
+        order_index: 3,
+        options: [
+          { id: "a", text: "Пинџур", is_correct: false, color: "red", shape: "triangle" },
+          { id: "b", text: "Тавче гравче", is_correct: false, color: "blue", shape: "diamond" },
+          { id: "c", text: "Ѓомлезе", is_correct: false, color: "yellow", shape: "circle" },
+          { id: "d", text: "Ајвар", is_correct: true, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "Кој антички град во близина на Битола бил основан во IV век пр.н.е. од Филип II Македонски?",
+        time_limit: 20,
+        points: 1000,
+        order_index: 4,
+        options: [
+          { id: "a", text: "Хераклеја Линкестис", is_correct: true, color: "red", shape: "triangle" },
+          { id: "b", text: "Стоби", is_correct: false, color: "blue", shape: "diamond" },
+          { id: "c", text: "Скупи", is_correct: false, color: "yellow", shape: "circle" },
+          { id: "d", text: "Баргала", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+      {
+        question_text: "Кој живописен кањон во близина на Скопје е познат по своите пештери и алпско вештачко езеро?",
+        time_limit: 15,
+        points: 1000,
+        order_index: 5,
+        options: [
+          { id: "a", text: "Демир Капија", is_correct: false, color: "red", shape: "triangle" },
+          { id: "b", text: "Кањон Матка", is_correct: true, color: "blue", shape: "diamond" },
+          { id: "c", text: "Кањон Градешка Река", is_correct: false, color: "yellow", shape: "circle" },
+          { id: "d", text: "Радика", is_correct: false, color: "green", shape: "square" },
+        ],
+      },
+    ],
+  },
 ];
 
 // Helper to get local stored quizzes (for offline / instant fallback)
@@ -747,6 +923,7 @@ export async function createQuizWithQuestions(
     title: input.title,
     description: input.description,
     category: input.category || "General",
+    language: input.language || "en",
     is_public: input.is_public,
     cover_image:
       input.cover_image ||
@@ -766,19 +943,27 @@ export async function createQuizWithQuestions(
     saveLocalQuiz(newQuiz);
 
     try {
-      const { error: quizError } = await supabase.from("quizzes").insert([
-        {
-          id: quizId,
-          user_id: userId,
-          creator_email: userEmail || null,
-          title: input.title,
-          description: input.description,
-          category: input.category,
-          is_public: input.is_public,
-          cover_image: newQuiz.cover_image,
-          play_count: 0,
-        },
-      ]);
+      const baseInsertPayload = {
+        id: quizId,
+        user_id: userId,
+        creator_email: userEmail || null,
+        title: input.title,
+        description: input.description,
+        category: input.category,
+        language: input.language || "en",
+        is_public: input.is_public,
+        cover_image: newQuiz.cover_image,
+        play_count: 0,
+      };
+
+      let { error: quizError } = await supabase.from("quizzes").insert([baseInsertPayload]);
+
+      // If the column 'language' does not exist in the remote database yet, retry without it
+      if (quizError && (quizError.message?.includes("language") || quizError.code === "PGRST204")) {
+        const { language: _lang, ...payloadWithoutLang } = baseInsertPayload;
+        const retryResult = await supabase.from("quizzes").insert([payloadWithoutLang]);
+        quizError = retryResult.error;
+      }
 
       if (!quizError && input.questions.length > 0) {
         const questionsToInsert = newQuiz.questions!.map((q) => ({

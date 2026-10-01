@@ -62,10 +62,10 @@ const TRACK_3_ICONS: FloatingIconItem[] = [
 
 // Kahoot Floating Neon Shapes
 const KAHOOT_SHAPES = [
-  { shape: "▲", color: "text-red-400/50" },
-  { shape: "◆", color: "text-blue-400/50" },
-  { shape: "●", color: "text-amber-400/50" },
-  { shape: "■", color: "text-emerald-400/50" },
+  { shape: "▲", color: "text-red-400/35" },
+  { shape: "◆", color: "text-blue-400/35" },
+  { shape: "●", color: "text-amber-400/35" },
+  { shape: "■", color: "text-emerald-400/35" },
 ];
 
 interface MarqueeRowProps {
@@ -76,17 +76,17 @@ interface MarqueeRowProps {
   opacityLevel?: string;
 }
 
-function MarqueeRow({ items, duration, topPercent, delayOffset = 0, opacityLevel = "opacity-45" }: MarqueeRowProps) {
-  // Multiply items for continuous looping
-  const loopedItems = [...items, ...items, ...items];
+function MarqueeRow({ items, duration, topPercent, delayOffset = 0, opacityLevel = "opacity-30" }: MarqueeRowProps) {
+  // 4 sets ensures exact 2-set shift (-50% to 0%) for a perfectly seamless, stutter-free loop
+  const loopedItems = [...items, ...items, ...items, ...items];
 
   return (
     <div
-      className={`absolute left-0 w-full flex items-center overflow-visible pointer-events-none select-none ${opacityLevel}`}
+      className={`absolute left-0 w-full flex items-center overflow-visible pointer-events-none select-none transition-opacity duration-700 ${opacityLevel}`}
       style={{ top: topPercent }}
     >
       <motion.div
-        className="flex items-center gap-16 sm:gap-28 shrink-0"
+        className="flex items-center gap-20 sm:gap-32 shrink-0 will-change-transform"
         initial={{ x: "-50%" }}
         animate={{ x: "0%" }}
         transition={{
@@ -106,44 +106,44 @@ function MarqueeRow({ items, duration, topPercent, delayOffset = 0, opacityLevel
               animate={
                 item.rotatesContinuously
                   ? {
-                      y: [0, -12, 0, 12, 0],
+                      y: [0, -6, 0, 6, 0],
                       rotate: 360,
                     }
                   : {
-                      y: [0, -12, 0, 12, 0],
-                      rotate: [-10, 10, -10],
+                      y: [0, -6, 0, 6, 0],
+                      rotate: [-5, 5, -5],
                     }
               }
               transition={{
                 y: {
-                  duration: 5 + (idx % 3),
+                  duration: 8 + (idx % 3) * 2,
                   repeat: Infinity,
                   ease: "easeInOut",
                 },
                 rotate: item.rotatesContinuously
                   ? {
-                      duration: 20,
+                      duration: 36,
                       repeat: Infinity,
                       ease: "linear",
                     }
                   : {
-                      duration: 6 + (idx % 4),
+                      duration: 10 + (idx % 4) * 2,
                       repeat: Infinity,
                       ease: "easeInOut",
                     },
               }}
-              className="relative flex items-center justify-center p-3 rounded-full bg-white/5 border border-white/10 backdrop-blur-[2px] transition-transform"
+              className="relative flex items-center justify-center p-2.5 rounded-full bg-white/[0.04] border border-white/[0.08] backdrop-blur-[1px] transition-transform"
               style={{
-                filter: `drop-shadow(0 0 10px ${item.glowColor})`,
+                filter: `drop-shadow(0 0 6px ${item.glowColor})`,
               }}
             >
               <Icon
                 style={{ width: item.size, height: item.size }}
-                className={`${item.colorClass} drop-shadow-md`}
+                className={`${item.colorClass} drop-shadow-sm`}
               />
 
               {/* Subtle Kahoot Shape companion orb */}
-              <span className={`absolute -bottom-1 -right-2 text-[10px] font-black ${kahootShape.color}`}>
+              <span className={`absolute -bottom-1 -right-2 text-[9px] font-black ${kahootShape.color}`}>
                 {kahootShape.shape}
               </span>
             </motion.div>
@@ -161,35 +161,35 @@ export function HeroBackgroundAnimation() {
       className="absolute inset-0 pointer-events-none overflow-hidden select-none z-0"
       style={{
         // Smooth gradient fade-in on the left and fade-out on the right
-        maskImage: "linear-gradient(to right, transparent 0%, black 18%, black 82%, transparent 100%)",
-        WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 18%, black 82%, transparent 100%)",
+        maskImage: "linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%)",
+        WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%)",
       }}
     >
-      {/* Track 1 - High level drifting left to right */}
+      {/* Track 1 - High level drifting smoothly left to right */}
       <MarqueeRow
         items={TRACK_1_ICONS}
-        duration={36}
+        duration={60}
         topPercent="12%"
         delayOffset={0}
-        opacityLevel="opacity-55"
+        opacityLevel="opacity-35"
       />
 
-      {/* Track 2 - Mid level with softer opacity so headline remains 100% crisp */}
+      {/* Track 2 - Mid level with relaxed drift and gentle opacity behind content */}
       <MarqueeRow
         items={TRACK_2_ICONS}
-        duration={46}
-        topPercent="48%"
-        delayOffset={-8}
-        opacityLevel="opacity-30"
+        duration={76}
+        topPercent="50%"
+        delayOffset={-12}
+        opacityLevel="opacity-20"
       />
 
-      {/* Track 3 - Lower level */}
+      {/* Track 3 - Lower level drifting smoothly */}
       <MarqueeRow
         items={TRACK_3_ICONS}
-        duration={40}
-        topPercent="82%"
-        delayOffset={-14}
-        opacityLevel="opacity-50"
+        duration={65}
+        topPercent="84%"
+        delayOffset={-20}
+        opacityLevel="opacity-30"
       />
     </div>
   );

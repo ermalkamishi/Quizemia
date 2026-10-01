@@ -13,8 +13,12 @@ interface AuthContextType {
   openAuthModal: (mode?: "login" | "signup") => void;
   closeAuthModal: () => void;
   signOut: () => Promise<void>;
-  signInWithEmail: (email: string, pass: string) => Promise<{ error?: string }>;
-  signUpWithEmail: (email: string, pass: string) => Promise<{ error?: string }>;
+  signInWithEmail: (email: string, pass: string) => Promise<{ error?: string; data?: any }>;
+  signUpWithEmail: (
+    email: string,
+    pass: string,
+    nickname?: string
+  ) => Promise<{ error?: string; data?: any; needsEmailConfirmation?: boolean }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -61,27 +65,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithEmail = async (email: string, pass: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
+      const cleanEmail = email.trim().toLowerCase();
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: cleanEmail,
         password: pass,
       });
       if (error) return { error: error.message };
       closeAuthModal();
-      return {};
+      return { data };
     } catch (err: unknown) {
       return { error: err instanceof Error ? err.message : "Failed to sign in" };
     }
   };
 
-  const signUpWithEmail = async (email: string, pass: string) => {
+  const signUpWithEmail = async (email: string, pass: string, nickname?: string) => {
     try {
-      const { error } = await supabase.auth.signUp({
-        email,
+      const cleanEmail = email.trim().toLowerCase();
+      const cleanNickname = nickname?.trim() || cleanEmail.split("@")[0];
+
+      const { data, error } = await supabase.auth.signUp({
+        email: cleanEmail,
         password: pass,
+        options: {
+          data: {
+            nickname: cleanNickname,
+            name: cleanNickname,
+            display_name: cleanNickname,
+          },
+        },
       });
+
       if (error) return { error: error.message };
+
+      // Supabase returns empty identities array if user with this email already exists and email enumeration protection is on
+      if (data.user?.identities && data.user.identities.length === 0) {
+        return { error: "An account with this email already exists. Please sign in instead." };
+      }
+
+      // If Supabase requires email verification and didn't start a session immediately
+      if (data.user && !data.session) {
+        return {
+          needsEmailConfirmation: true,
+          data,
+        };
+      }
+
       closeAuthModal();
-      return {};
+      return { data };
     } catch (err: unknown) {
       return { error: err instanceof Error ? err.message : "Failed to sign up" };
     }

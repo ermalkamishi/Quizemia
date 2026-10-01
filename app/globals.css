@@ -24,3 +24,24 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Prevent split-second flash of landing page before intro splash mounts */
+html.intro-active {
+  background-color: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  html.intro-active {
+    background-color: #09090b;
+  }
+}
+html.intro-active body {
+  overflow: hidden;
+}
+html.intro-active #page-content {
+  visibility: hidden !important;
+}
+
+/* Instantly hide intro on frame 0 for returning visitors */
+html.intro-seen #quizemia-intro-root {
+  display: none !important;
+}

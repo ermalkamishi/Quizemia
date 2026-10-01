@@ -1,5 +1,6 @@
 export type OptionShape = "triangle" | "diamond" | "circle" | "square";
 export type OptionColor = "red" | "blue" | "yellow" | "green";
+export type QuizLanguage = "en" | "al" | "mk";
 
 export interface QuestionOption {
   id: string; // e.g. "a", "b", "c", "d"
@@ -7,6 +8,11 @@ export interface QuestionOption {
   is_correct: boolean;
   color: OptionColor;
   shape: OptionShape;
+}
+
+export interface QuestionTranslation {
+  question_text: string;
+  options: QuestionOption[];
 }
 
 export interface Question {
@@ -18,6 +24,11 @@ export interface Question {
   points: number; // default 1000
   order_index: number;
   options: QuestionOption[];
+  translations?: {
+    en?: QuestionTranslation;
+    al?: QuestionTranslation;
+    mk?: QuestionTranslation;
+  };
 }
 
 export interface Quiz {
@@ -27,6 +38,17 @@ export interface Quiz {
   title: string;
   description?: string;
   category?: string;
+  language?: QuizLanguage;
+  title_translations?: {
+    en?: string;
+    al?: string;
+    mk?: string;
+  };
+  description_translations?: {
+    en?: string;
+    al?: string;
+    mk?: string;
+  };
   is_public: boolean;
   cover_image?: string;
   play_count: number;
@@ -40,6 +62,7 @@ export interface CreateQuizInput {
   description: string;
   category: string;
   is_public: boolean;
+  language?: QuizLanguage;
   cover_image?: string;
   questions: Omit<Question, "id" | "quiz_id">[];
 }
