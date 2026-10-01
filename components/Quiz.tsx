@@ -28,6 +28,9 @@ import {
   Trash2,
   FileText,
   X,
+  Eye,
+  Edit3,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -134,6 +137,7 @@ export default function Quiz() {
   const [quizCategory, setQuizCategory] = useState("General");
   const [aiPrompt, setAiPrompt] = useState("");
   const [isAiGenerating, setIsAiGenerating] = useState(false);
+  const [aiGeneratedSuccess, setAiGeneratedSuccess] = useState(false);
   const [uploadedImageName, setUploadedImageName] = useState<string | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const getInitialQuestions = (lang: string): Question[] => [
@@ -415,6 +419,7 @@ export default function Quiz() {
     }
 
     setIsAiGenerating(true);
+    setAiGeneratedSuccess(false);
 
     try {
       const formData = new FormData();
@@ -445,8 +450,8 @@ export default function Quiz() {
         setQuestionsList(data.questions);
       }
 
-      // Switch to manual editor tab so user can immediately review/edit questions
-      setCreationTab("manual");
+      // Show the generated quiz showcase section with question count, Play button, and View/Edit questions button
+      setAiGeneratedSuccess(true);
 
       const langLabel = quizLanguage === "al" ? "Shqip" : quizLanguage === "mk" ? "Македонски" : "English";
       const qCount = data.questions?.length || 0;
@@ -455,8 +460,8 @@ export default function Quiz() {
         title: language === "al" ? "Kuizi me AI u Gjenerua me Sukses!" : "AI Quiz Generated Successfully!",
         description:
           language === "al"
-            ? `U gjeneruan ${qCount} pyetje në ${langLabel}${uploadedFile ? ` nga "${uploadedFile.name}"` : ""}. Mund t'i rishikoni dhe t'i ruani!`
-            : `Generated ${qCount} questions in ${langLabel}${uploadedFile ? ` from "${uploadedFile.name}"` : ""}. You can review and save them now!`,
+            ? `U gjeneruan ${qCount} pyetje në ${langLabel}${uploadedFile ? ` nga "${uploadedFile.name}"` : ""}. Mund ta luani menjëherë ose t'i modifikoni pyetjet!`
+            : `Generated ${qCount} questions in ${langLabel}${uploadedFile ? ` from "${uploadedFile.name}"` : ""}. You can play now or edit the questions!`,
         type: "success",
       });
     } catch (err: any) {
@@ -473,6 +478,30 @@ export default function Quiz() {
     } finally {
       setIsAiGenerating(false);
     }
+  };
+
+  const handlePlayCurrentQuiz = () => {
+    if (!questionsList || questionsList.length === 0) {
+      toast({
+        title: language === "al" ? "Kërkohen Pyetje" : "Questions Required",
+        description: language === "al" ? "Nuk ka pyetje për të luajtur." : "There are no questions to play.",
+        type: "error",
+      });
+      return;
+    }
+    const tempQuiz: QuizType = {
+      id: "temp-" + Date.now(),
+      title: quizTitle.trim() || (language === "al" ? "Kuiz me AI" : "AI Generated Quiz"),
+      description: quizDescription.trim() || (language === "al" ? "Krijuar me Quizemia AI" : "Created with Quizemia AI"),
+      category: quizCategory,
+      language: quizLanguage,
+      is_public: false,
+      questions: questionsList,
+      play_count: 0,
+      created_at: new Date().toISOString(),
+    };
+    startQuiz(tempQuiz);
+    setMode("play");
   };
 
   const handleInitiateSave = () => {
@@ -1224,234 +1253,478 @@ export default function Quiz() {
 
             {/* AI Generator Tab */}
             <TabsContent value="ai" className="space-y-6 pt-4">
-              <Card className="border-amber-200/60 dark:border-amber-900/40 bg-gradient-to-b from-amber-50/30 to-transparent dark:from-amber-950/10">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-xl font-bold">
-                    <Sparkles className="h-5 w-5 text-amber-500 fill-amber-400" />
-                    <span>{t.quiz.aiTitle}</span>
-                  </CardTitle>
-                  <p className="text-xs sm:text-sm text-zinc-500">
-                    {t.quiz.aiSubtitle}
-                  </p>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Language Selector for AI Generation */}
-                  <div className="p-3.5 rounded-2xl bg-white/80 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
-                        <Globe className="h-4 w-4 text-blue-500" />
-                        <span>{language === "al" ? "Gjuha e Kuizit të Gjeneruar" : "Quiz Generation Language"}</span>
-                      </label>
-                      <span className="text-[11px] font-semibold text-zinc-400">
-                        {language === "al" ? "Pyetjet do të gjenerohen në këtë gjuhë" : "AI will write questions & answers in this language"}
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setQuizLanguage("en")}
-                        className={cn(
-                          "flex items-center justify-center gap-2 py-2 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer",
-                          quizLanguage === "en"
-                            ? "border-blue-500 bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 shadow-sm ring-2 ring-blue-500/20"
-                            : "border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 text-zinc-600 dark:text-zinc-400"
-                        )}
-                      >
-                        <span>English</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setQuizLanguage("al")}
-                        className={cn(
-                          "flex items-center justify-center gap-2 py-2 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer",
-                          quizLanguage === "al"
-                            ? "border-red-500 bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 shadow-sm ring-2 ring-red-500/20"
-                            : "border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 text-zinc-600 dark:text-zinc-400"
-                        )}
-                      >
-                        <span>Shqip</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setQuizLanguage("mk")}
-                        className={cn(
-                          "flex items-center justify-center gap-2 py-2 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer",
-                          quizLanguage === "mk"
-                            ? "border-amber-500 bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 shadow-sm ring-2 ring-amber-500/20"
-                            : "border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 text-zinc-600 dark:text-zinc-400"
-                        )}
-                      >
-                        <span>Македонски</span>
-                      </button>
-                    </div>
-                  </div>
+              {aiGeneratedSuccess && questionsList.length > 0 ? (
+                /* Generated Quiz Showcase Card */
+                <motion.div
+                  initial={{ opacity: 0, y: 14, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ duration: 0.3 }}
+                  className="rounded-3xl border-2 border-amber-400/70 dark:border-amber-500/40 bg-gradient-to-br from-amber-50/70 via-white to-orange-50/60 dark:from-zinc-900 dark:via-zinc-900 dark:to-amber-950/20 p-6 sm:p-8 shadow-xl shadow-amber-500/10 space-y-6 relative overflow-hidden"
+                >
+                  {/* Subtle ambient blur */}
+                  <div className="absolute -top-24 -right-24 w-60 h-60 bg-amber-400/20 dark:bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+                  <div className="absolute -bottom-24 -left-24 w-60 h-60 bg-emerald-400/20 dark:bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
-                  {/* Question Quantity / Count Selection */}
-                  <div className="p-3.5 rounded-2xl bg-white/80 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
-                        <Layers className="h-4 w-4 text-amber-500" />
-                        <span>{language === "al" ? "Sasia e Pyetjeve" : "Question Quantity"}</span>
-                      </label>
-                      <span className="text-[11px] font-semibold text-zinc-400">
-                        {language === "al" ? "Përshtatur automatikisht me sasinë e materialit" : "Scales dynamically with document length"}
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setQuestionCountMode("auto")}
-                        className={cn(
-                          "flex flex-col items-center justify-center py-2 px-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer",
-                          questionCountMode === "auto"
-                            ? "border-amber-500 bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 shadow-sm ring-2 ring-amber-500/20"
-                            : "border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 text-zinc-600 dark:text-zinc-400"
-                        )}
-                      >
-                        <span className="flex items-center gap-1">
-                          <Sparkles className="h-3 w-3 text-amber-500" />
-                          {language === "al" ? "Automatik" : "Auto (Smart)"}
-                        </span>
-                        <span className="text-[10px] font-normal text-zinc-400">{language === "al" ? "Sipas gjatësisë" : "Adapts to info"}</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setQuestionCountMode("5")}
-                        className={cn(
-                          "flex flex-col items-center justify-center py-2 px-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer",
-                          questionCountMode === "5"
-                            ? "border-amber-500 bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 shadow-sm ring-2 ring-amber-500/20"
-                            : "border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 text-zinc-600 dark:text-zinc-400"
-                        )}
-                      >
-                        <span>5 {language === "al" ? "Pyetje" : "Questions"}</span>
-                        <span className="text-[10px] font-normal text-zinc-400">{language === "al" ? "I shpejtë" : "Quick test"}</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setQuestionCountMode("10")}
-                        className={cn(
-                          "flex flex-col items-center justify-center py-2 px-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer",
-                          questionCountMode === "10"
-                            ? "border-amber-500 bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 shadow-sm ring-2 ring-amber-500/20"
-                            : "border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 text-zinc-600 dark:text-zinc-400"
-                        )}
-                      >
-                        <span>10 {language === "al" ? "Pyetje" : "Questions"}</span>
-                        <span className="text-[10px] font-normal text-zinc-400">{language === "al" ? "Standard" : "Standard"}</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setQuestionCountMode("max")}
-                        className={cn(
-                          "flex flex-col items-center justify-center py-2 px-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer",
-                          questionCountMode === "max"
-                            ? "border-amber-500 bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 shadow-sm ring-2 ring-amber-500/20"
-                            : "border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 text-zinc-600 dark:text-zinc-400"
-                        )}
-                      >
-                        <span>{language === "al" ? "Maksimumi" : "Max Questions"}</span>
-                        <span className="text-[10px] font-normal text-zinc-400">{language === "al" ? "Gjithë materiali" : "All key points"}</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 block mb-1.5">
-                      {language === "al" ? "Tema ose Udhëzimi i Kuizit" : "Quiz Subject or Prompt"}
-                    </label>
-                    <Input
-                      type="text"
-                      placeholder={t.quiz.topicPlaceholder}
-                      value={aiPrompt}
-                      onChange={(e) => setAiPrompt(e.target.value)}
-                    />
-                  </div>
-
-                  {/* Upload Dropzone UI (Supports Word, PowerPoint, PDF, Images) */}
-                  <div>
-                    <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 block mb-1.5">
-                      {t.quiz.uploadNotes}
-                    </label>
-                    <label className="flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900/50 hover:border-amber-500 cursor-pointer transition-all text-center relative group">
-                      <div className="flex items-center justify-center h-12 w-12 rounded-2xl bg-amber-500/10 text-amber-500 mb-3 group-hover:scale-110 transition-transform">
-                        {uploadedFile ? (
-                          <FileText className="h-6 w-6 text-amber-600 dark:text-amber-400" />
-                        ) : (
-                          <Upload className="h-6 w-6" />
-                        )}
-                      </div>
-                      <span className="text-xs sm:text-sm font-bold text-zinc-800 dark:text-zinc-200">
-                        {uploadedFile
-                          ? uploadedFile.name
-                          : (language === "al" ? "Kliko ose lësho dokumentin këtu" : "Click or drop your study file here")}
-                      </span>
-                      <span className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1 max-w-sm">
-                        {language === "al"
-                          ? "Mbështet Word (.docx), PowerPoint (.pptx), PDF, dhe Foto (PNG, JPG)"
-                          : "Supports Word (.docx), PowerPoint (.pptx), PDF, and Images (PNG, JPG)"}
-                      </span>
-                      {uploadedFile && (
-                        <div className="mt-3 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs font-bold shadow-sm">
-                          <span>{(uploadedFile.size / 1024).toFixed(1)} KB</span>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              setUploadedFile(null);
-                              setUploadedImageName(null);
-                            }}
-                            className="hover:text-red-500 transition-colors p-0.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10"
-                            title={language === "al" ? "Hiq skedarin" : "Remove file"}
-                          >
-                            <X className="h-3.5 w-3.5" />
-                          </button>
+                  <div className="relative z-10 space-y-6">
+                    {/* Header Banner */}
+                    <div className="flex flex-wrap items-center justify-between gap-4 border-b border-amber-200/60 dark:border-zinc-800 pb-5">
+                      <div className="flex items-center gap-3.5">
+                        <div className="h-14 w-14 rounded-2xl bg-gradient-to-tr from-amber-500 via-orange-500 to-amber-600 flex items-center justify-center text-white shadow-lg shadow-orange-500/30 shrink-0">
+                          <Sparkles className="h-7 w-7 fill-current animate-pulse" />
                         </div>
-                      )}
-                      <input
-                        type="file"
-                        accept="image/*,.pdf,.docx,.doc,.pptx,.ppt,.txt,.md"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            setUploadedFile(file);
-                            setUploadedImageName(file.name);
-                            toast({
-                              title: language === "al" ? "Dokumenti u Bashkëngjit" : "File Attached",
-                              description: `${file.name} ${language === "al" ? "gati për analizë me AI" : "ready for AI analysis"}`,
-                              type: "info",
-                            });
-                          }
-                        }}
-                      />
-                    </label>
-                  </div>
+                        <div>
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-black uppercase tracking-wider">
+                            <CheckCircle className="h-3.5 w-3.5" />
+                            <span>{language === "al" ? "Kuizi u Gjenerua me Sukses!" : "Quiz Generated Successfully!"}</span>
+                          </div>
+                          <h2 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-white mt-1.5 tracking-tight">
+                            {quizTitle || (language === "al" ? "Kuizi i Ri me AI" : "New AI Quiz")}
+                          </h2>
+                        </div>
+                      </div>
 
-                  <Button
-                    onClick={handleGenerateWithAi}
-                    disabled={isAiGenerating}
-                    className="w-full bg-gradient-to-r from-red-600 via-amber-500 to-blue-600 hover:opacity-95 text-white font-extrabold text-base py-6 shadow-md"
-                  >
-                    {isAiGenerating ? (
-                      <span className="flex items-center gap-2">
-                        <Sparkles className="h-5 w-5 animate-spin" />
-                        {t.quiz.generating}
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-2">
-                        <Sparkles className="h-5 w-5" />
-                        {t.quiz.generateButton}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="font-bold border-zinc-300 dark:border-zinc-700 bg-white/90 dark:bg-zinc-800 text-xs px-3 py-1">
+                          {t.categories[quizCategory] || quizCategory}
+                        </Badge>
+                        <Badge className="font-bold bg-blue-600 text-white hover:bg-blue-600 text-xs px-3 py-1">
+                          {quizLanguage === "al" ? "🇦🇱 Shqip" : quizLanguage === "mk" ? "🇲🇰 Македонски" : "🇬🇧 English"}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    {/* Description */}
+                    {quizDescription && (
+                      <p className="text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed italic bg-white/60 dark:bg-zinc-800/40 p-3.5 rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50">
+                        "{quizDescription}"
+                      </p>
                     )}
-                  </Button>
-                </CardContent>
-              </Card>
+
+                    {/* Big Statistics Section: Question count, Points, Time */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                      <div className="p-4 rounded-2xl bg-white dark:bg-zinc-800 border border-amber-200 dark:border-zinc-700 text-center shadow-sm">
+                        <div className="text-3xl sm:text-4xl font-black text-amber-600 dark:text-amber-400">
+                          {questionsList.length}
+                        </div>
+                        <div className="text-xs font-bold text-zinc-500 dark:text-zinc-400 mt-1">
+                          {language === "al" ? "Pyetje të Gjeneruara" : "Total Questions"}
+                        </div>
+                      </div>
+
+                      <div className="p-4 rounded-2xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-center shadow-sm">
+                        <div className="text-3xl sm:text-4xl font-black text-blue-600 dark:text-blue-400">
+                          {questionsList.reduce((acc, q) => acc + (q.points || 1000), 0).toLocaleString()}
+                        </div>
+                        <div className="text-xs font-bold text-zinc-500 dark:text-zinc-400 mt-1">
+                          {language === "al" ? "Pikë Maksimale" : "Total Points"}
+                        </div>
+                      </div>
+
+                      <div className="p-4 rounded-2xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-center shadow-sm">
+                        <div className="text-3xl sm:text-4xl font-black text-purple-600 dark:text-purple-400">
+                          ~{Math.max(1, Math.round((questionsList.reduce((acc, q) => acc + (q.time_limit || 20), 0)) / 60))}m
+                        </div>
+                        <div className="text-xs font-bold text-zinc-500 dark:text-zinc-400 mt-1">
+                          {language === "al" ? "Kohëzgjatja Est." : "Est. Playtime"}
+                        </div>
+                      </div>
+
+                      <div className="p-4 rounded-2xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-center shadow-sm">
+                        <div className="text-3xl sm:text-4xl font-black text-emerald-600 dark:text-emerald-400">
+                          4
+                        </div>
+                        <div className="text-xs font-bold text-zinc-500 dark:text-zinc-400 mt-1">
+                          {language === "al" ? "Opsione për Pyetje" : "Choices / Question"}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Source File indicator if applicable */}
+                    {uploadedFile && (
+                      <div className="flex items-center gap-2 text-xs font-semibold text-zinc-600 dark:text-zinc-300 bg-amber-500/10 dark:bg-amber-950/30 p-3 rounded-2xl border border-amber-500/20">
+                        <FileText className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                        <span className="truncate">
+                          {language === "al" ? "Materiali burimor i ngarkuar:" : "Source study material:"} <strong>{uploadedFile.name}</strong> ({(uploadedFile.size / 1024).toFixed(1)} KB)
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Primary Action Buttons */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                      {/* Play Now Button */}
+                      <Button
+                        type="button"
+                        onClick={handlePlayCurrentQuiz}
+                        className="bg-gradient-to-r from-emerald-600 via-teal-600 to-blue-600 hover:opacity-95 text-white font-extrabold text-base py-6 rounded-2xl shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-2.5 cursor-pointer"
+                      >
+                        <Play className="h-5 w-5 fill-current" />
+                        <span>{language === "al" ? "Luaj Kuizin Tani" : "Play Quiz Now"}</span>
+                      </Button>
+
+                      {/* View / Edit Questions Button */}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setCreationTab("manual");
+                        }}
+                        className="border-2 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-800 dark:text-zinc-200 font-bold text-sm py-6 rounded-2xl shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <Edit3 className="h-4 w-4 text-amber-500" />
+                        <span>{language === "al" ? "Shiko / Modifiko Pyetjet" : "View / Edit Questions"}</span>
+                        <Badge variant="secondary" className="ml-1 text-xs font-black">
+                          {questionsList.length}
+                        </Badge>
+                      </Button>
+
+                      {/* Save to Library Button */}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleInitiateSave}
+                        disabled={isSavingQuiz}
+                        className="border border-blue-300 dark:border-blue-800 bg-blue-50/80 dark:bg-blue-950/40 hover:bg-blue-100 text-blue-700 dark:text-blue-300 font-bold text-sm py-6 rounded-2xl shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <Check className="h-4 w-4" />
+                        <span>{language === "al" ? "Ruaj në Bibliotekë" : "Save to Library"}</span>
+                      </Button>
+                    </div>
+
+                    {/* Collapsible Questions Preview */}
+                    <details className="group rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/70 dark:bg-zinc-900/70 p-4 transition-all">
+                      <summary className="flex items-center justify-between text-xs sm:text-sm font-bold text-zinc-800 dark:text-zinc-200 cursor-pointer select-none">
+                        <span className="flex items-center gap-2">
+                          <Eye className="h-4 w-4 text-blue-500" />
+                          <span>{language === "al" ? "Shiko listën e plotë të pyetjeve" : "Quick glance at all question titles"} ({questionsList.length})</span>
+                        </span>
+                        <span className="text-zinc-400 group-open:rotate-180 transition-transform text-xs">▼</span>
+                      </summary>
+                      <div className="mt-3.5 space-y-2 border-t border-zinc-100 dark:border-zinc-800 pt-3">
+                        {questionsList.map((q, idx) => {
+                          const correctOpt = q.options?.find((o) => o.is_correct);
+                          return (
+                            <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 text-xs">
+                              <div className="flex items-start gap-2.5 flex-1 min-w-0">
+                                <span className="h-5 w-5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5 sm:mt-0">
+                                  {idx + 1}
+                                </span>
+                                <span className="font-semibold text-zinc-800 dark:text-zinc-200">
+                                  {q.question_text}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                                {correctOpt && (
+                                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
+                                    <Check className="h-3 w-3" />
+                                    <span>{correctOpt.text}</span>
+                                  </span>
+                                )}
+                                <span className="text-[10px] text-zinc-400 bg-zinc-200/60 dark:bg-zinc-700/60 px-1.5 py-0.5 rounded">
+                                  {q.time_limit || 20}s
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </details>
+
+                    {/* Reset / Generate Another */}
+                    <div className="pt-2 flex items-center justify-between border-t border-amber-200/50 dark:border-zinc-800 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAiGeneratedSuccess(false);
+                        }}
+                        className="font-bold text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" />
+                        <span>{language === "al" ? "Gjenero një kuiz tjetër me AI" : "Generate another quiz with AI"}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCreationTab("manual");
+                        }}
+                        className="font-bold text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 hover:underline flex items-center gap-1 cursor-pointer"
+                      >
+                        <span>{language === "al" ? "Shko te redaktimi manual" : "Go to manual editor"}</span>
+                        <span>→</span>
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              ) : (
+                <Card className="border-amber-200/60 dark:border-amber-900/40 bg-gradient-to-b from-amber-50/30 to-transparent dark:from-amber-950/10">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-xl font-bold">
+                      <Sparkles className="h-5 w-5 text-amber-500 fill-amber-400" />
+                      <span>{t.quiz.aiTitle}</span>
+                    </CardTitle>
+                    <p className="text-xs sm:text-sm text-zinc-500">
+                      {t.quiz.aiSubtitle}
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Language Selector for AI Generation */}
+                    <div className="p-3.5 rounded-2xl bg-white/80 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
+                          <Globe className="h-4 w-4 text-blue-500" />
+                          <span>{language === "al" ? "Gjuha e Kuizit të Gjeneruar" : "Quiz Generation Language"}</span>
+                        </label>
+                        <span className="text-[11px] font-semibold text-zinc-400">
+                          {language === "al" ? "Pyetjet do të gjenerohen në këtë gjuhë" : "AI will write questions & answers in this language"}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setQuizLanguage("en")}
+                          className={cn(
+                            "flex items-center justify-center gap-2 py-2 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer",
+                            quizLanguage === "en"
+                              ? "border-blue-500 bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 shadow-sm ring-2 ring-blue-500/20"
+                              : "border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 text-zinc-600 dark:text-zinc-400"
+                          )}
+                        >
+                          <span>English</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setQuizLanguage("al")}
+                          className={cn(
+                            "flex items-center justify-center gap-2 py-2 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer",
+                            quizLanguage === "al"
+                              ? "border-red-500 bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 shadow-sm ring-2 ring-red-500/20"
+                              : "border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 text-zinc-600 dark:text-zinc-400"
+                          )}
+                        >
+                          <span>Shqip</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setQuizLanguage("mk")}
+                          className={cn(
+                            "flex items-center justify-center gap-2 py-2 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer",
+                            quizLanguage === "mk"
+                              ? "border-amber-500 bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 shadow-sm ring-2 ring-amber-500/20"
+                              : "border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 text-zinc-600 dark:text-zinc-400"
+                          )}
+                        >
+                          <span>Македонски</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Question Quantity / Count Selection */}
+                    <div className="p-3.5 rounded-2xl bg-white/80 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
+                          <Layers className="h-4 w-4 text-amber-500" />
+                          <span>{language === "al" ? "Sasia e Pyetjeve" : "Question Quantity"}</span>
+                        </label>
+                        <span className="text-[11px] font-semibold text-zinc-400">
+                          {language === "al" ? "Përshtatur automatikisht me sasinë e materialit" : "Scales dynamically with document length"}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setQuestionCountMode("auto")}
+                          className={cn(
+                            "flex flex-col items-center justify-center py-2 px-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer",
+                            questionCountMode === "auto"
+                              ? "border-amber-500 bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 shadow-sm ring-2 ring-amber-500/20"
+                              : "border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 text-zinc-600 dark:text-zinc-400"
+                          )}
+                        >
+                          <span className="flex items-center gap-1">
+                            <Sparkles className="h-3 w-3 text-amber-500" />
+                            {language === "al" ? "Automatik" : "Auto (Smart)"}
+                          </span>
+                          <span className="text-[10px] font-normal text-zinc-400">{language === "al" ? "Sipas gjatësisë" : "Adapts to info"}</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setQuestionCountMode("5")}
+                          className={cn(
+                            "flex flex-col items-center justify-center py-2 px-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer",
+                            questionCountMode === "5"
+                              ? "border-amber-500 bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 shadow-sm ring-2 ring-amber-500/20"
+                              : "border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 text-zinc-600 dark:text-zinc-400"
+                          )}
+                        >
+                          <span>5 {language === "al" ? "Pyetje" : "Questions"}</span>
+                          <span className="text-[10px] font-normal text-zinc-400">{language === "al" ? "I shpejtë" : "Quick test"}</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setQuestionCountMode("10")}
+                          className={cn(
+                            "flex flex-col items-center justify-center py-2 px-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer",
+                            questionCountMode === "10"
+                              ? "border-amber-500 bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 shadow-sm ring-2 ring-amber-500/20"
+                              : "border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 text-zinc-600 dark:text-zinc-400"
+                          )}
+                        >
+                          <span>10 {language === "al" ? "Pyetje" : "Questions"}</span>
+                          <span className="text-[10px] font-normal text-zinc-400">{language === "al" ? "Standard" : "Standard"}</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setQuestionCountMode("max")}
+                          className={cn(
+                            "flex flex-col items-center justify-center py-2 px-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer",
+                            questionCountMode === "max"
+                              ? "border-amber-500 bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 shadow-sm ring-2 ring-amber-500/20"
+                              : "border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 text-zinc-600 dark:text-zinc-400"
+                          )}
+                        >
+                          <span>{language === "al" ? "Maksimumi" : "Max Questions"}</span>
+                          <span className="text-[10px] font-normal text-zinc-400">{language === "al" ? "Gjithë materiali" : "All key points"}</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 block mb-1.5">
+                        {language === "al" ? "Tema ose Udhëzimi i Kuizit" : "Quiz Subject or Prompt"}
+                      </label>
+                      <Input
+                        type="text"
+                        placeholder={t.quiz.topicPlaceholder}
+                        value={aiPrompt}
+                        onChange={(e) => setAiPrompt(e.target.value)}
+                      />
+                    </div>
+
+                    {/* Upload Dropzone UI (Supports Word, PowerPoint, PDF, Images) */}
+                    <div>
+                      <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 block mb-1.5">
+                        {t.quiz.uploadNotes}
+                      </label>
+                      <label className="flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900/50 hover:border-amber-500 cursor-pointer transition-all text-center relative group">
+                        <div className="flex items-center justify-center h-12 w-12 rounded-2xl bg-amber-500/10 text-amber-500 mb-3 group-hover:scale-110 transition-transform">
+                          {uploadedFile ? (
+                            <FileText className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+                          ) : (
+                            <Upload className="h-6 w-6" />
+                          )}
+                        </div>
+                        <span className="text-xs sm:text-sm font-bold text-zinc-800 dark:text-zinc-200">
+                          {uploadedFile
+                            ? uploadedFile.name
+                            : (language === "al" ? "Kliko ose lësho dokumentin këtu" : "Click or drop your study file here")}
+                        </span>
+                        <span className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1 max-w-sm">
+                          {language === "al"
+                            ? "Mbështet Word (.docx), PowerPoint (.pptx), PDF, dhe Foto (PNG, JPG)"
+                            : "Supports Word (.docx), PowerPoint (.pptx), PDF, and Images (PNG, JPG)"}
+                        </span>
+                        {uploadedFile && (
+                          <div className="mt-3 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs font-bold shadow-sm">
+                            <span>{(uploadedFile.size / 1024).toFixed(1)} KB</span>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setUploadedFile(null);
+                                setUploadedImageName(null);
+                              }}
+                              className="hover:text-red-500 transition-colors p-0.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10"
+                              title={language === "al" ? "Hiq skedarin" : "Remove file"}
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*,.pdf,.docx,.doc,.pptx,.ppt,.txt,.md"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setUploadedFile(file);
+                              setUploadedImageName(file.name);
+                              toast({
+                                title: language === "al" ? "Dokumenti u Bashkëngjit" : "File Attached",
+                                description: `${file.name} ${language === "al" ? "gati për analizë me AI" : "ready for AI analysis"}`,
+                                type: "info",
+                              });
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
+
+                    <Button
+                      onClick={handleGenerateWithAi}
+                      disabled={isAiGenerating}
+                      className="w-full bg-gradient-to-r from-red-600 via-amber-500 to-blue-600 hover:opacity-95 text-white font-extrabold text-base py-6 shadow-md"
+                    >
+                      {isAiGenerating ? (
+                        <span className="flex items-center gap-2">
+                          <Sparkles className="h-5 w-5 animate-spin" />
+                          {t.quiz.generating}
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-2">
+                          <Sparkles className="h-5 w-5" />
+                          {t.quiz.generateButton}
+                        </span>
+                      )}
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
 
             {/* Manual Editor Tab */}
             <TabsContent value="manual" className="space-y-6 pt-4">
+              {questionsList.length > 0 && (
+                <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-emerald-500/10 border border-amber-300 dark:border-amber-700/60 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold shadow-md shadow-amber-500/20 shrink-0">
+                      <Sparkles className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-amber-800 dark:text-amber-300">
+                        {language === "al" ? "Kuizi i Gatshëm për Lojë" : "Quiz Ready to Play"}
+                      </div>
+                      <div className="text-sm sm:text-base font-black text-zinc-900 dark:text-white">
+                        {quizTitle || (language === "al" ? "Kuizi i Ri" : "New Quiz")} ({questionsList.length} {language === "al" ? "pyetje" : "questions"})
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handlePlayCurrentQuiz}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-1.5 shadow-sm"
+                    >
+                      <Play className="h-3.5 w-3.5 fill-current" />
+                      <span>{language === "al" ? "Luaj Tani" : "Play Now"}</span>
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={handleInitiateSave}
+                      disabled={isSavingQuiz}
+                      className="border-zinc-300 dark:border-zinc-700 font-bold gap-1.5"
+                    >
+                      <Check className="h-3.5 w-3.5" />
+                      <span>{language === "al" ? "Ruaj" : "Save"}</span>
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg font-bold">
