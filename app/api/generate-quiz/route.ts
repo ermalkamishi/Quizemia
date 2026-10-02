@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import JSZip from "jszip";
 import mammoth from "mammoth";
+import { checkProfanity, validateQuizContent } from "@/lib/moderation";
 
 export const maxDuration = 60; // Allow up to 60s for AI synthesis
 export const dynamic = "force-dynamic";
@@ -25,6 +26,8 @@ interface QuizAiResponse {
   description: string;
   category: "General" | "Science" | "Geography" | "Technology" | "History" | "Pop Culture";
   questions: QuestionSchema[];
+  safety_violation?: boolean;
+  reason?: string;
 }
 
 const SHAPE_CONFIG = [
@@ -88,6 +91,37 @@ export async function POST(req: NextRequest) {
 
     const file = formData.get("file") as File | null;
 
+    // 1. Content Moderation: Validate user prompt
+    if (prompt.trim()) {
+      const promptCheck = checkProfanity(prompt);
+      if (!promptCheck.isSafe) {
+        return NextResponse.json(
+          {
+            error: language === "al" ? promptCheck.messageAl : promptCheck.messageEn,
+            moderation: promptCheck,
+          },
+          { status: 400 }
+        );
+      }
+    }
+
+    // 2. Content Moderation: Validate file name
+    if (file && file.size > 0 && file.name) {
+      const fileNameCheck = checkProfanity(file.name);
+      if (!fileNameCheck.isSafe) {
+        return NextResponse.json(
+          {
+            error:
+              language === "al"
+                ? `Emri i skedarit të ngarkuar: ${fileNameCheck.messageAl}`
+                : `Uploaded file name: ${fileNameCheck.messageEn}`,
+            moderation: fileNameCheck,
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     let extractedText = "";
     let inlineDataPart: { inlineData: { mimeType: string; data: string } } | null = null;
     let fileInfoNote = "";
@@ -138,6 +172,23 @@ export async function POST(req: NextRequest) {
       } catch (extractErr) {
         console.warn("Document parser fallback to raw text extraction:", extractErr);
         extractedText = buffer.toString("utf-8").replace(/[^\x20-\x7E\r\n\t]/g, " ");
+      }
+    }
+
+    // 3. Content Moderation: Validate extracted document text
+    if (extractedText.trim()) {
+      const docCheck = checkProfanity(extractedText);
+      if (!docCheck.isSafe) {
+        return NextResponse.json(
+          {
+            error:
+              language === "al"
+                ? `Përmbajtja e dokumentit të ngarkuar: ${docCheck.messageAl}`
+                : `Uploaded document content: ${docCheck.messageEn}`,
+            moderation: docCheck,
+          },
+          { status: 400 }
+        );
       }
     }
 
@@ -195,7 +246,21 @@ ${countInstruction}
 
 ${langInstruction}
 
-RULES:
+CRITICAL CONTENT SAFETY & MODERATION POLICY:
+Quizemia is strictly an educational learning platform. You must enforce zero tolerance for harmful or inappropriate content.
+IF ANY OF THE FOLLOWING ARE DETECTED in the user prompt, uploaded document, or uploaded image/diagram:
+1. Blood, gore, mutilation, wounds, corpses, or graphic violence
+2. Nudity, sexual organs, sexual intercourse, pornography, erotic scenes, or adult/sexual services
+3. Swear words, hate speech, vulgar slurs, or harassment
+4. Suicide or self-harm promotion
+YOU MUST REFUSE to generate quiz questions. Instead, output ONLY this JSON:
+{
+  "safety_violation": true,
+  "category": "sexual" | "violence" | "vulgarity",
+  "reason": "Specific explanation of the safety violation"
+}
+
+NORMAL RULES (only when material is safe and educational):
 1. Every question must have EXACTLY 4 answer options with IDs "a", "b", "c", "d".
 2. EXACTLY ONE option per question must have "is_correct": true, and the other 3 must be "is_correct": false.
 3. CRITICAL SHUFFLING: The correct answer MUST be randomly and unpredictably placed among "a", "b", "c", and "d". DO NOT always put the correct answer in the same position.
@@ -277,11 +342,34 @@ SCHEMA:
               temperature: 0.7,
               maxOutputTokens: 8192,
             },
+            safetySettings: [
+              { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+              { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+              { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_LOW_AND_ABOVE" },
+              { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+            ],
           }),
         });
 
         if (geminiResponse.ok) {
           const geminiData = await geminiResponse.json();
+
+          // Intercept Gemini automatic safety filter triggers
+          const finishReason = geminiData.candidates?.[0]?.finishReason;
+          const blockReason = geminiData.promptFeedback?.blockReason;
+
+          if (finishReason === "SAFETY" || blockReason === "SAFETY") {
+            return NextResponse.json(
+              {
+                error:
+                  language === "al"
+                    ? "Skedari ose fotoja e ngarkuar u bllokua nga filtrat e sigurisë (përmban përmbajtje të papërshtatshme, gjak/dhunë, lakuriqësi ose material eksplicit)."
+                    : "Uploaded file or image was blocked by content safety filters (contains blood/violence, nudity, sexual content, or inappropriate material).",
+              },
+              { status: 400 }
+            );
+          }
+
           const candidateText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
           if (candidateText) {
             rawText = candidateText;
@@ -315,6 +403,33 @@ SCHEMA:
       } else {
         throw new Error("Failed to parse Gemini output as JSON.");
       }
+    }
+
+    // Check if the AI model detected safety violation in image or document content
+    if (parsed.safety_violation) {
+      return NextResponse.json(
+        {
+          error:
+            language === "al"
+              ? "Skedari ose fotoja e ngarkuar shkel rregullat e sigurisë (nuk lejohet gjak, dhunë, lakuriqësi, përmbajtje seksuale ose fjalor fyes)."
+              : `Content rejected by safety policy: ${parsed.reason || "Uploaded material contains inappropriate, violent, or explicit content."}`,
+        },
+        { status: 400 }
+      );
+    }
+
+    // Final safety verification on the generated quiz structure
+    const safetyCheck = validateQuizContent(parsed.title, parsed.description, parsed.questions);
+    if (!safetyCheck.isSafe) {
+      return NextResponse.json(
+        {
+          error:
+            language === "al"
+              ? `Përmbajtja e gjeneruar shkel rregullat e sigurisë: ${safetyCheck.messageAl}`
+              : `Generated content violates safety policy: ${safetyCheck.messageEn}`,
+        },
+        { status: 400 }
+      );
     }
 
     // Normalize, randomly shuffle options, and enforce Kahoot shapes & colors

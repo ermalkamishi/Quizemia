@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { Question } from "@/types/quiz";
+import { validateQuizContent } from "@/lib/moderation";
 
 export const dynamic = "force-dynamic";
 
@@ -68,6 +69,19 @@ export async function POST(req: NextRequest) {
 
     if (!quiz || !quiz.id) {
       return NextResponse.json({ error: "Missing quiz payload" }, { status: 400 });
+    }
+
+    // Safety moderation check on quiz title, description, questions, and options
+    const moderation = validateQuizContent(quiz.title, quiz.description, questions);
+    if (!moderation.isSafe) {
+      return NextResponse.json(
+        {
+          error: moderation.messageEn || "Quiz content violates safety policy.",
+          messageAl: moderation.messageAl,
+          moderation,
+        },
+        { status: 400 }
+      );
     }
 
     const baseInsertPayload = {

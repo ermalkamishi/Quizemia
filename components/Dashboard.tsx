@@ -27,6 +27,8 @@ import { fetchPublicQuizzes, DEFAULT_PUBLIC_QUIZZES } from "@/lib/supabase/queri
 import { HeroBackgroundAnimation } from "@/components/HeroBackgroundAnimation";
 import { HeroQuizCard } from "@/components/HeroQuizCard";
 import { useLanguage } from "@/context/LanguageContext";
+import { useToast } from "@/components/ui/toast";
+import { checkProfanity } from "@/lib/moderation";
 import { cn } from "@/lib/utils";
 
 const CATEGORIES = ["All", "General", "Geography", "Science", "Technology", "History", "Pop Culture"];
@@ -40,6 +42,7 @@ const QUICK_TOPICS = [
 
 export default function Dashboard() {
   const router = useRouter();
+  const { toast } = useToast();
   const { language, t } = useLanguage();
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,6 +73,15 @@ export default function Dashboard() {
     if (e) e.preventDefault();
     const query = heroPrompt.trim() || (uploadedFile ? uploadedFile.name.replace(/\.[^/.]+$/, "") : "");
     if (query) {
+      const moderation = checkProfanity(query);
+      if (!moderation.isSafe) {
+        toast({
+          title: language === "al" ? "Përmbajtje e Ndaluar" : "Prohibited Content",
+          description: language === "al" ? moderation.messageAl : moderation.messageEn,
+          type: "error",
+        });
+        return;
+      }
       router.push(`/quiz?mode=create&prompt=${encodeURIComponent(query)}`);
     } else {
       router.push("/quiz?mode=create");
@@ -79,6 +91,19 @@ export default function Dashboard() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      const fileCheck = checkProfanity(file.name);
+      if (!fileCheck.isSafe) {
+        toast({
+          title: language === "al" ? "Skedar i Ndaluar" : "Prohibited File",
+          description:
+            language === "al"
+              ? `Emri i skedarit përmban fjalë të papërshtatshme ("${fileCheck.flaggedWord}").`
+              : `File name contains inappropriate language ("${fileCheck.flaggedWord}").`,
+          type: "error",
+        });
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        return;
+      }
       setUploadedFile(file);
       if (!heroPrompt) {
         setHeroPrompt(file.name.replace(/\.[^/.]+$/, ""));

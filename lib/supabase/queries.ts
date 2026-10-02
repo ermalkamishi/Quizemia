@@ -1,5 +1,6 @@
 import { supabase } from "./client";
 import { Quiz, CreateQuizInput } from "@/types/quiz";
+import { validateQuizContent } from "@/lib/moderation";
 
 // Resilient default seed data in case Supabase table hasn't been migrated yet
 export const DEFAULT_PUBLIC_QUIZZES: Quiz[] = [
@@ -898,6 +899,15 @@ export async function createQuizWithQuestions(
   userId?: string | null,
   userEmailOrNickname?: string | null
 ): Promise<{ success: boolean; quiz?: Quiz; error?: string }> {
+  // Safety validation: verify that title, description, and questions don't contain prohibited words
+  const safetyCheck = validateQuizContent(input.title, input.description, input.questions);
+  if (!safetyCheck.isSafe) {
+    return {
+      success: false,
+      error: safetyCheck.messageEn || "Quiz contains prohibited content.",
+    };
+  }
+
   const quizId = crypto.randomUUID();
   const authorTag = userEmailOrNickname?.trim() || "Quizemia Creator";
   const newQuiz: Quiz = {
@@ -924,10 +934,8 @@ export async function createQuizWithQuestions(
 
   // Only persist to storage if user is signed in! Guests play transiently without saving.
   if (userId) {
-    saveLocalQuiz(newQuiz);
-
     try {
-      await fetch("/api/quizzes", {
+      const res = await fetch("/api/quizzes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -935,8 +943,19 @@ export async function createQuizWithQuestions(
           questions: newQuiz.questions || [],
         }),
       });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        return {
+          success: false,
+          error: errorData.error || "Failed to save quiz due to safety or server validation.",
+        };
+      }
+
+      saveLocalQuiz(newQuiz);
       return { success: true, quiz: newQuiz };
     } catch {
+      saveLocalQuiz(newQuiz);
       return { success: true, quiz: newQuiz };
     }
   }

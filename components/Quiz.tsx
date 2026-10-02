@@ -33,6 +33,7 @@ import {
   Check,
   Shuffle,
   User as UserIcon,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,6 +60,8 @@ import {
   incrementQuizPlayCount,
   DEFAULT_PUBLIC_QUIZZES,
 } from "@/lib/supabase/queries";
+import { checkProfanity, validateQuizContent } from "@/lib/moderation";
+import { getCategoryTheme } from "@/lib/categoryThemes";
 
 const CATEGORIES = ["All", "General", "Geography", "Science", "Technology", "History", "Pop Culture"];
 
@@ -191,6 +194,20 @@ export default function Quiz() {
   const [lobbyCategory, setLobbyCategory] = useState("All");
 
   const startQuiz = (quiz: QuizType) => {
+    // Safety check: verify quiz content doesn't contain prohibited/vulgar words
+    const safetyCheck = validateQuizContent(quiz.title, quiz.description, quiz.questions);
+    if (!safetyCheck.isSafe) {
+      toast({
+        title: language === "al" ? "Kuiz i Ndaluar" : "Prohibited Quiz Content",
+        description:
+          language === "al"
+            ? `Ky kuiz përmban fjalë të papërshtatshme (${safetyCheck.flaggedWord}) dhe nuk lejohet të luhet.`
+            : `This quiz contains prohibited or vulgar language ("${safetyCheck.flaggedWord}") and cannot be played.`,
+        type: "error",
+      });
+      return;
+    }
+
     if (autoAdvanceTimeoutRef.current) {
       clearTimeout(autoAdvanceTimeoutRef.current);
       autoAdvanceTimeoutRef.current = null;
@@ -459,6 +476,32 @@ export default function Quiz() {
       return;
     }
 
+    // Safety check on user prompt
+    if (aiPrompt.trim()) {
+      const promptCheck = checkProfanity(aiPrompt);
+      if (!promptCheck.isSafe) {
+        toast({
+          title: language === "al" ? "Kërkesë e Ndaluar" : "Prohibited Topic",
+          description: language === "al" ? promptCheck.messageAl : promptCheck.messageEn,
+          type: "error",
+        });
+        return;
+      }
+    }
+
+    // Safety check on uploaded file name
+    if (uploadedFile && uploadedFile.name) {
+      const fileCheck = checkProfanity(uploadedFile.name);
+      if (!fileCheck.isSafe) {
+        toast({
+          title: language === "al" ? "Emër Skedari i Ndaluar" : "Prohibited File Name",
+          description: language === "al" ? fileCheck.messageAl : fileCheck.messageEn,
+          type: "error",
+        });
+        return;
+      }
+    }
+
     setIsAiGenerating(true);
     setAiGeneratedSuccess(false);
     setShowEditQuestions(false);
@@ -532,6 +575,21 @@ export default function Quiz() {
       });
       return;
     }
+
+    // Safety validation on manually created or edited questions
+    const safetyCheck = validateQuizContent(quizTitle, quizDescription, questionsList);
+    if (!safetyCheck.isSafe) {
+      toast({
+        title: language === "al" ? "Përmbajtje e Ndaluar" : "Prohibited Content Detected",
+        description:
+          language === "al"
+            ? `Kuizi përmban fjalë të papërshtatshme (${safetyCheck.flaggedWord}). Ju lutem pastroni pyetjet para se të luani.`
+            : `Quiz contains prohibited language ("${safetyCheck.flaggedWord}"). Please remove inappropriate words before playing.`,
+        type: "error",
+      });
+      return;
+    }
+
     const tempQuiz: QuizType = {
       id: "temp-" + Date.now(),
       title: quizTitle.trim() || (language === "al" ? "Kuiz me AI" : "AI Generated Quiz"),
@@ -561,6 +619,20 @@ export default function Quiz() {
       toast({
         title: language === "al" ? "Kërkohen Pyetje" : "Questions Required",
         description: language === "al" ? "Ju lutem shtoni të paktën një pyetje në kuiz." : "Please add at least one question to your quiz.",
+        type: "error",
+      });
+      return;
+    }
+
+    // Safety validation: verify that title, description, and manual questions don't contain bad words
+    const safetyCheck = validateQuizContent(quizTitle, quizDescription, questionsList);
+    if (!safetyCheck.isSafe) {
+      toast({
+        title: language === "al" ? "Përmbajtje e Ndaluar" : "Prohibited Content Detected",
+        description:
+          language === "al"
+            ? `Kuizi përmban fjalë të papërshtatshme (${safetyCheck.flaggedWord}). Ju lutem hiqni fjalorin fyes para se ta ruani.`
+            : `Quiz contains prohibited or vulgar words ("${safetyCheck.flaggedWord}"). Please remove prohibited words before saving.`,
         type: "error",
       });
       return;
@@ -643,6 +715,8 @@ export default function Quiz() {
   const currentQ = activeQuiz?.questions?.[currentQuestionIdx];
   const totalQuestions = activeQuiz?.questions?.length || 0;
   const isPlayingActiveQuiz = Boolean(mode === "play" && activeQuiz && !isGameOver && currentQ);
+  const categoryTheme = getCategoryTheme(activeQuiz?.category);
+  const CategoryIcon = categoryTheme.icon;
 
   return (
     <div
@@ -918,18 +992,68 @@ export default function Quiz() {
                 </div>
               </div>
 
-              {/* Question Text & Media Card - Compact on mobile, fills on desktop */}
+              {/* Question Text & Thematic Category Canvas Card */}
               <motion.div
                 key={currentQuestionIdx}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-                className="flex-1 min-h-[90px] max-h-[34vh] md:max-h-none flex flex-col items-center justify-center p-3.5 sm:p-5 lg:p-6 rounded-2xl sm:rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-md text-center overflow-hidden"
+                initial={{ opacity: 0, y: 10, scale: 0.99 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.99 }}
+                transition={{ duration: 0.22, ease: "easeOut" }}
+                className={cn(
+                  "relative flex-1 min-h-[96px] max-h-[36vh] md:max-h-none flex flex-col items-center justify-center p-3.5 sm:p-5 lg:p-6 rounded-2xl sm:rounded-3xl shadow-lg text-center overflow-hidden border backdrop-blur-xl transition-all duration-300",
+                  categoryTheme.gradientBg,
+                  timeLeft <= 5 ? categoryTheme.borderUrgent : categoryTheme.borderNormal
+                )}
               >
-                {/* Optional Media (GIF/Image placeholder) */}
+                {/* Ambient Category Glow Orbs */}
+                <div
+                  className={cn(
+                    "absolute -top-12 -left-12 w-44 h-44 rounded-full blur-3xl opacity-40 dark:opacity-30 pointer-events-none bg-gradient-to-br",
+                    categoryTheme.glowClass
+                  )}
+                />
+                <div
+                  className={cn(
+                    "absolute -bottom-12 -right-12 w-44 h-44 rounded-full blur-3xl opacity-35 dark:opacity-25 pointer-events-none bg-gradient-to-tl",
+                    categoryTheme.glowClass
+                  )}
+                />
+
+                {/* Thematic SVG Watermark in background */}
+                <div
+                  className={cn(
+                    "absolute inset-0 flex items-center justify-center pointer-events-none select-none transition-transform duration-700 ease-out",
+                    categoryTheme.watermarkColor
+                  )}
+                  style={{ transform: "rotate(-5deg) scale(1.05)" }}
+                >
+                  {categoryTheme.renderWatermark()}
+                </div>
+
+                {/* Sleek Category Tag + Points Pill Header */}
+                <div className="relative z-10 mb-2 sm:mb-3 flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap">
+                  <div
+                    className={cn(
+                      "inline-flex items-center gap-1 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-black border shadow-sm backdrop-blur-md",
+                      categoryTheme.badgeStyle
+                    )}
+                  >
+                    <CategoryIcon className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />
+                    <span>
+                      {language === "al" ? categoryTheme.nameAl : categoryTheme.nameEn}
+                    </span>
+                  </div>
+
+                  <span className="hidden sm:inline-block w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700" />
+
+                  <div className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-bold bg-white/80 dark:bg-zinc-800/80 text-zinc-600 dark:text-zinc-300 border border-zinc-200/70 dark:border-zinc-700/70 shadow-sm backdrop-blur-md">
+                    <span>⚡ {currentQ.points || 1000} pts</span>
+                  </div>
+                </div>
+
+                {/* Optional Media (GIF/Image placeholder) if present */}
                 {currentQ.media_url && (
-                  <div className="h-20 sm:h-32 md:h-44 max-h-[15vh] md:max-h-[22vh] w-auto max-w-lg mx-auto overflow-hidden rounded-xl sm:rounded-2xl mb-2 sm:mb-3 shadow-md shrink-1">
+                  <div className="relative z-10 h-20 sm:h-32 md:h-44 max-h-[15vh] md:max-h-[22vh] w-auto max-w-lg mx-auto overflow-hidden rounded-xl sm:rounded-2xl mb-2 sm:mb-3 shadow-md shrink-1 border border-white/20 dark:border-white/10">
                     <img
                       src={currentQ.media_url}
                       alt="Question Visual Media"
@@ -938,7 +1062,8 @@ export default function Quiz() {
                   </div>
                 )}
 
-                <h2 className="text-base sm:text-xl lg:text-[1.75rem] font-black tracking-tight text-zinc-900 dark:text-zinc-50 leading-snug line-clamp-3 sm:line-clamp-4">
+                {/* Question Text */}
+                <h2 className="relative z-10 text-base sm:text-xl lg:text-[1.75rem] font-black tracking-tight text-zinc-900 dark:text-zinc-50 leading-snug line-clamp-3 sm:line-clamp-4 drop-shadow-sm max-w-3xl mx-auto">
                   {currentQ.question_text}
                 </h2>
               </motion.div>
@@ -1793,12 +1918,26 @@ export default function Quiz() {
                       <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 block mb-1.5">
                         {language === "al" ? "Tema ose Udhëzimi i Kuizit" : "Quiz Subject or Prompt"}
                       </label>
-                      <Input
-                        type="text"
-                        placeholder={t.quiz.topicPlaceholder}
-                        value={aiPrompt}
-                        onChange={(e) => setAiPrompt(e.target.value)}
-                      />
+                      {(() => {
+                        const promptSafety = checkProfanity(aiPrompt);
+                        return (
+                          <div>
+                            <Input
+                              type="text"
+                              placeholder={t.quiz.topicPlaceholder}
+                              value={aiPrompt}
+                              onChange={(e) => setAiPrompt(e.target.value)}
+                              className={cn(!promptSafety.isSafe && "border-red-500 focus-visible:ring-red-500 text-red-700 dark:text-red-400")}
+                            />
+                            {!promptSafety.isSafe && (
+                              <p className="text-xs text-red-500 font-bold mt-1.5 flex items-center gap-1">
+                                <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                                <span>{language === "al" ? promptSafety.messageAl : promptSafety.messageEn}</span>
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
 
                     {/* Upload Dropzone UI (Supports Word, PowerPoint, PDF, Images) */}
@@ -1849,6 +1988,19 @@ export default function Quiz() {
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) {
+                              const fileCheck = checkProfanity(file.name);
+                              if (!fileCheck.isSafe) {
+                                toast({
+                                  title: language === "al" ? "Skedar i Ndaluar" : "Prohibited File",
+                                  description:
+                                    language === "al"
+                                      ? `Emri i skedarit përmban fjalë të papërshtatshme ("${fileCheck.flaggedWord}"). Ju lutem ngarkoni vetëm materiale edukative.`
+                                      : `File name contains inappropriate language ("${fileCheck.flaggedWord}"). Please upload only clean educational files.`,
+                                  type: "error",
+                                });
+                                e.target.value = "";
+                                return;
+                              }
                               setUploadedFile(file);
                               setUploadedImageName(file.name);
                               toast({
@@ -1938,12 +2090,26 @@ export default function Quiz() {
                       <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 block mb-1.5">
                         {t.quiz.quizTitleLabel} *
                       </label>
-                      <Input
-                        type="text"
-                        placeholder={t.quiz.quizTitlePlaceholder}
-                        value={quizTitle}
-                        onChange={(e) => setQuizTitle(e.target.value)}
-                      />
+                      {(() => {
+                        const titleSafety = checkProfanity(quizTitle);
+                        return (
+                          <div>
+                            <Input
+                              type="text"
+                              placeholder={t.quiz.quizTitlePlaceholder}
+                              value={quizTitle}
+                              onChange={(e) => setQuizTitle(e.target.value)}
+                              className={cn(!titleSafety.isSafe && "border-red-500 focus-visible:ring-red-500 text-red-700 dark:text-red-400")}
+                            />
+                            {!titleSafety.isSafe && (
+                              <p className="text-xs text-red-500 font-bold mt-1 flex items-center gap-1">
+                                <AlertTriangle className="h-3 w-3 shrink-0" />
+                                <span>{language === "al" ? titleSafety.messageAl : titleSafety.messageEn}</span>
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
                     <div>
                       <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 block mb-1.5">
@@ -1982,12 +2148,26 @@ export default function Quiz() {
                     <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 block mb-1.5">
                       {t.quiz.quizDescLabel}
                     </label>
-                    <Input
-                      type="text"
-                      placeholder={t.quiz.quizDescPlaceholder}
-                      value={quizDescription}
-                      onChange={(e) => setQuizDescription(e.target.value)}
-                    />
+                    {(() => {
+                      const descSafety = checkProfanity(quizDescription);
+                      return (
+                        <div>
+                          <Input
+                            type="text"
+                            placeholder={t.quiz.quizDescPlaceholder}
+                            value={quizDescription}
+                            onChange={(e) => setQuizDescription(e.target.value)}
+                            className={cn(!descSafety.isSafe && "border-red-500 focus-visible:ring-red-500 text-red-700 dark:text-red-400")}
+                          />
+                          {!descSafety.isSafe && (
+                            <p className="text-xs text-red-500 font-bold mt-1 flex items-center gap-1">
+                              <AlertTriangle className="h-3 w-3 shrink-0" />
+                              <span>{language === "al" ? descSafety.messageAl : descSafety.messageEn}</span>
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {/* Public / Private Toggle (Only relevant for registered users with saved quizzes) */}
@@ -2108,12 +2288,33 @@ export default function Quiz() {
                 </div>
               </div>
 
-              {questionsList.map((q, qIndex) => (
-                <Card key={qIndex} className="p-5 border-zinc-200 dark:border-zinc-800">
+              {questionsList.map((q, qIndex) => {
+                const qSafety = checkProfanity(q.question_text);
+                const hasOptionViolation = q.options.some((opt) => !checkProfanity(opt.text).isSafe);
+                const isCardFlagged = !qSafety.isSafe || hasOptionViolation;
+
+                return (
+                <Card
+                  key={qIndex}
+                  className={cn(
+                    "p-5 transition-colors border",
+                    isCardFlagged
+                      ? "border-red-500/60 bg-red-500/[0.03] dark:bg-red-950/[0.15]"
+                      : "border-zinc-200 dark:border-zinc-800"
+                  )}
+                >
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
-                      {language === "al" ? "Pyetja" : "Question"} #{qIndex + 1}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
+                        {language === "al" ? "Pyetja" : "Question"} #{qIndex + 1}
+                      </span>
+                      {isCardFlagged && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-red-100 dark:bg-red-950/70 text-red-600 dark:text-red-400 border border-red-300 dark:border-red-800">
+                          <AlertTriangle className="h-3 w-3 shrink-0" />
+                          <span>{language === "al" ? "Fjalë e ndaluar" : "Prohibited word"}</span>
+                        </span>
+                      )}
+                    </div>
                     <div className="flex items-center gap-2 sm:gap-3">
                       <span className="text-xs font-semibold text-zinc-500">
                         {language === "al" ? "Koha" : "Time"}: {q.time_limit}s
@@ -2168,26 +2369,42 @@ export default function Quiz() {
                     </div>
                   </div>
 
-                  <Input
-                    type="text"
-                    placeholder={language === "al" ? "Shkruani tekstin e pyetjes..." : "Enter question text..."}
-                    value={q.question_text}
-                    onChange={(e) => {
-                      const updated = [...questionsList];
-                      updated[qIndex].question_text = e.target.value;
-                      setQuestionsList(updated);
-                    }}
-                    className="font-bold text-base mb-4"
-                  />
+                  <div>
+                    <Input
+                      type="text"
+                      placeholder={language === "al" ? "Shkruani tekstin e pyetjes..." : "Enter question text..."}
+                      value={q.question_text}
+                      onChange={(e) => {
+                        const updated = [...questionsList];
+                        updated[qIndex].question_text = e.target.value;
+                        setQuestionsList(updated);
+                      }}
+                      className={cn(
+                        "font-bold text-base mb-2",
+                        !qSafety.isSafe && "border-red-500 focus-visible:ring-red-500 text-red-700 dark:text-red-400"
+                      )}
+                    />
+                    {!qSafety.isSafe && (
+                      <p className="text-xs text-red-500 font-bold mb-3 flex items-center gap-1">
+                        <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                        <span>{language === "al" ? qSafety.messageAl : qSafety.messageEn}</span>
+                      </p>
+                    )}
+                  </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {q.options.map((opt, optIndex) => (
+                    {q.options.map((opt, optIndex) => {
+                      const optSafety = checkProfanity(opt.text);
+                      return (
                       <div
                         key={opt.id}
-                        className={`flex items-center gap-2 p-3 rounded-xl border ${opt.is_correct
-                          ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20"
-                          : "border-zinc-200 dark:border-zinc-800"
-                          }`}
+                        className={`flex items-center gap-2 p-3 rounded-xl border ${
+                          !optSafety.isSafe
+                            ? "border-red-500 bg-red-50/60 dark:bg-red-950/30"
+                            : opt.is_correct
+                            ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20"
+                            : "border-zinc-200 dark:border-zinc-800"
+                        }`}
                       >
                         <input
                           type="radio"
@@ -2204,25 +2421,54 @@ export default function Quiz() {
                           className="h-4 w-4 accent-emerald-600 cursor-pointer"
                           title={language === "al" ? "Shënoje si përgjigje të saktë" : "Mark as correct answer"}
                         />
-                        <Input
-                          type="text"
-                          placeholder={language === "al" ? `Opsioni ${opt.id.toUpperCase()}` : `Option ${opt.id.toUpperCase()}`}
-                          value={opt.text}
-                          onChange={(e) => {
-                            const updated = [...questionsList];
-                            updated[qIndex].options[optIndex].text = e.target.value;
-                            setQuestionsList(updated);
-                          }}
-                          className="h-9 text-xs sm:text-sm"
-                        />
+                        <div className="flex-1 flex flex-col gap-0.5">
+                          <Input
+                            type="text"
+                            placeholder={language === "al" ? `Opsioni ${opt.id.toUpperCase()}` : `Option ${opt.id.toUpperCase()}`}
+                            value={opt.text}
+                            onChange={(e) => {
+                              const updated = [...questionsList];
+                              updated[qIndex].options[optIndex].text = e.target.value;
+                              setQuestionsList(updated);
+                            }}
+                            className={cn(
+                              "h-9 text-xs sm:text-sm",
+                              !optSafety.isSafe && "border-red-500 focus-visible:ring-red-500 text-red-700 dark:text-red-400"
+                            )}
+                          />
+                          {!optSafety.isSafe && (
+                            <span className="text-[10px] text-red-500 font-bold flex items-center gap-1 mt-0.5">
+                              <AlertTriangle className="h-2.5 w-2.5 shrink-0" />
+                              <span>{language === "al" ? optSafety.messageAl : optSafety.messageEn}</span>
+                            </span>
+                          )}
+                        </div>
                         <span className="text-xs font-bold text-zinc-400 uppercase w-6 text-center">
                           {opt.id}
                         </span>
                       </div>
-                    ))}
+                    );})}
                   </div>
                 </Card>
-              ))}
+              );})}
+
+              {/* Content safety warning banner if any part violates moderation */}
+              {(() => {
+                const totalSafety = validateQuizContent(quizTitle, quizDescription, questionsList);
+                if (!totalSafety.isSafe) {
+                  return (
+                    <div className="p-3.5 rounded-2xl bg-red-500/10 border-2 border-red-500/40 text-red-600 dark:text-red-400 text-xs sm:text-sm font-bold flex items-center gap-2.5 shadow-sm">
+                      <AlertTriangle className="h-5 w-5 shrink-0 text-red-500" />
+                      <span>
+                        {language === "al"
+                          ? `Vërejtje Sigurie: ${totalSafety.messageAl || "Përmbajtja përmban fjalë të papërshtatshme."} Ju lutem pastroni fjalët e theksuara para se ta ruani ose ta luani.`
+                          : `Safety Warning: ${totalSafety.messageEn || "Quiz contains prohibited words."} Please fix flagged terms before saving or playing.`}
+                      </span>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
 
               {/* Save & Play CTA */}
               <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-zinc-200 dark:border-zinc-800 pt-6">
