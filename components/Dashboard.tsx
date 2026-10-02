@@ -256,9 +256,9 @@ export default function Dashboard() {
           </div>
 
           {/* =========================================================================
-              RIGHT COLUMN: INTERACTIVE 3D GLASSMORPHISM CARD PREVIEW
+              RIGHT COLUMN: INTERACTIVE 3D GLASSMORPHISM CARD PREVIEW (Desktop Only)
              ========================================================================= */}
-          <div className="lg:col-span-5 relative flex items-center justify-center pt-4 lg:pt-0">
+          <div className="hidden lg:flex lg:col-span-5 relative items-center justify-center pt-4 lg:pt-0">
             <HeroQuizCard />
           </div>
         </div>

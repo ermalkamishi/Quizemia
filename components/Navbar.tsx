@@ -142,16 +142,11 @@ export function Navbar() {
         </div>
 
         {/* Mobile Hamburger Button */}
-        <div className="flex md:hidden items-center gap-2">
-          {user && (
-            <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-xs uppercase shadow-sm">
-              {(user.user_metadata?.nickname || user.user_metadata?.name || user.email || "U").charAt(0)}
-            </div>
-          )}
+        <div className="flex md:hidden items-center">
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 transition-colors"
+            className="p-2 rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
             aria-label="Toggle Navigation Menu"
           >
             {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -201,7 +196,6 @@ export function Navbar() {
                     : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200"
                 )}
               >
-                <span>🇬🇧</span>
                 <span>EN</span>
               </button>
               <button
@@ -214,7 +208,6 @@ export function Navbar() {
                     : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200"
                 )}
               >
-                <span>🇦🇱</span>
                 <span>AL</span>
               </button>
             </div>
