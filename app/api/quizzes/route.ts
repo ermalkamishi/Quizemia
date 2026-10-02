@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { Quiz, Question, CreateQuizInput } from "@/types/quiz";
+import { Question } from "@/types/quiz";
 
 export const dynamic = "force-dynamic";
 

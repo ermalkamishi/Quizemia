@@ -16,7 +16,6 @@ import {
   Info,
   LogOut,
   User as UserIcon,
-  Globe,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 

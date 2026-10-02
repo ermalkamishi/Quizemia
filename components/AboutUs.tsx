@@ -4,20 +4,16 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
-  Sparkles,
   Zap,
   Globe,
   Award,
-  Users,
-  CheckCircle2,
   ArrowRight,
   BrainCircuit,
   Gamepad2,
   BarChart3,
-  HeartHandshake,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { HowToUseDemo } from "@/components/HowToUseDemo";
 import { useLanguage } from "@/context/LanguageContext";

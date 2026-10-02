@@ -13,15 +13,12 @@ import {
   BrainCircuit,
   Gamepad2,
   CheckCircle2,
-  ArrowRight,
   MousePointer,
   RotateCcw,
   Zap,
   Timer,
   Flame,
-  Globe,
   Lock,
-  Layers,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -67,7 +64,6 @@ export function HowToUseDemo() {
   const { language, t } = useLanguage();
   const [activeStep, setActiveStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
-  const [stepTimerProgress, setStepTimerProgress] = useState(0);
 
   // Step 3 Interactive state
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
@@ -78,53 +74,27 @@ export function HowToUseDemo() {
 
   const STEP_DURATION_MS = 5500;
 
-  // Decoupled refs to prevent React StrictMode side-effect re-execution from skipping steps
-  const activeStepRef = useRef(0);
-  activeStepRef.current = activeStep;
-
-  const progressRef = useRef(0);
-
   // Auto-play timer for sliding smoothly: Step 1 (0) -> Step 2 (1) -> Step 3 (2) -> Step 1 (0)
   useEffect(() => {
     if (!isPlaying) return;
 
-    const intervalTime = 40; // 40ms tick for ultra-smooth progress animation
-    const stepIncrement = (intervalTime / STEP_DURATION_MS) * 100;
+    const timer = setInterval(() => {
+      setActiveStep((prev) => (prev + 1) % DEMO_STEPS.length);
+    }, STEP_DURATION_MS);
 
-    const interval = setInterval(() => {
-      progressRef.current += stepIncrement;
-
-      if (progressRef.current >= 100) {
-        progressRef.current = 0;
-        setStepTimerProgress(0);
-        // Strictly increment 0 -> 1 -> 2 -> 0 without skipping
-        const next = (activeStepRef.current + 1) % DEMO_STEPS.length;
-        activeStepRef.current = next;
-        setActiveStep(next);
-      } else {
-        setStepTimerProgress(progressRef.current);
-      }
-    }, intervalTime);
-
-    return () => clearInterval(interval);
+    return () => clearInterval(timer);
   }, [isPlaying]);
 
-  // When step changes manually, reset progress bar
   const handleSelectStep = (stepIdx: number) => {
-    progressRef.current = 0;
-    setStepTimerProgress(0);
-    activeStepRef.current = stepIdx;
     setActiveStep(stepIdx);
   };
 
   const handlePrevStep = () => {
-    const prev = (activeStep - 1 + DEMO_STEPS.length) % DEMO_STEPS.length;
-    handleSelectStep(prev);
+    setActiveStep((prev) => (prev - 1 + DEMO_STEPS.length) % DEMO_STEPS.length);
   };
 
   const handleNextStep = () => {
-    const next = (activeStep + 1) % DEMO_STEPS.length;
-    handleSelectStep(next);
+    setActiveStep((prev) => (prev + 1) % DEMO_STEPS.length);
   };
 
   // Step 3 Gameplay: Interactive Timer (pauses when demo is paused)
@@ -274,16 +244,20 @@ export function HowToUseDemo() {
 
                   {/* Animated Progress Line on Active Tab */}
                   {isActive && (
-                    <div
+                    <motion.div
+                      key={`progress-${activeStep}-${isPlaying}`}
+                      initial={{ width: "0%" }}
+                      animate={{ width: isPlaying ? "100%" : "100%" }}
+                      transition={{
+                        duration: isPlaying ? STEP_DURATION_MS / 1000 : 0,
+                        ease: "linear",
+                      }}
                       className={cn(
-                        "absolute bottom-0 left-0 h-[3px] rounded-full transition-all duration-75",
+                        "absolute bottom-0 left-0 h-[3px] rounded-full",
                         isPlaying
                           ? "bg-gradient-to-r from-blue-500 to-indigo-400"
                           : "bg-amber-400"
                       )}
-                      style={{
-                        width: `${stepTimerProgress}%`,
-                      }}
                     />
                   )}
                 </button>

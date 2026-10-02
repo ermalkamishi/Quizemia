@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
 import {
   Sparkles,
@@ -15,7 +15,6 @@ import {
   ArrowRight,
   RotateCcw,
   Upload,
-  Image as ImageIcon,
   Flame,
   Globe,
   Lock,
@@ -270,22 +269,9 @@ export default function Quiz() {
 
   // Reset Game
   const resetGame = () => {
-    if (autoAdvanceTimeoutRef.current) {
-      clearTimeout(autoAdvanceTimeoutRef.current);
-      autoAdvanceTimeoutRef.current = null;
+    if (activeQuiz) {
+      startQuiz(activeQuiz);
     }
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-    setCurrentQuestionIdx(0);
-    setSelectedOptionId(null);
-    setIsAnswerRevealed(false);
-    setScore(0);
-    setStreak(0);
-    setIsGameOver(false);
-    const initialTime = activeQuiz?.questions?.[0]?.time_limit || 20;
-    setTimeLeft(initialTime);
   };
 
   // Timer Effect during Gameplay: only runs when playing an active quiz
@@ -593,7 +579,6 @@ export default function Quiz() {
 
   const handleConfirmSave = async (publishChoice: boolean) => {
     setIsSavingQuiz(true);
-    setIsPublic(publishChoice);
 
     const creatorNickname =
       user?.user_metadata?.nickname ||

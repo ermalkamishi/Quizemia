@@ -4,15 +4,11 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import {
-  Clock,
   Flame,
   CheckCircle2,
   XCircle,
   Sparkles,
   Trophy,
-  RotateCcw,
-  Zap,
-  Award,
 } from "lucide-react";
 import { useLanguage, AnswerOptionTranslation } from "@/context/LanguageContext";
 
@@ -41,6 +37,8 @@ export function HeroQuizCard() {
     setMouseOffset({ x: 0, y: 0 });
   };
 
+  const resetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   // 15-second countdown timer with auto-reset loop
   useEffect(() => {
     const timer = setInterval(() => {
@@ -52,7 +50,12 @@ export function HeroQuizCard() {
       });
     }, 1000);
 
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      if (resetTimeoutRef.current) {
+        clearTimeout(resetTimeoutRef.current);
+      }
+    };
   }, []);
 
   // Handle option selection
@@ -87,7 +90,8 @@ export function HeroQuizCard() {
     }
 
     // Auto-reset after 2.8s so user can play again
-    setTimeout(() => {
+    if (resetTimeoutRef.current) clearTimeout(resetTimeoutRef.current);
+    resetTimeoutRef.current = setTimeout(() => {
       setSelectedOptionId(null);
       setIsAnswered(false);
       setShowCelebration(false);

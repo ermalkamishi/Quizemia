@@ -1,5 +1,5 @@
 import { supabase } from "./client";
-import { Quiz, Question, CreateQuizInput } from "@/types/quiz";
+import { Quiz, CreateQuizInput } from "@/types/quiz";
 
 // Resilient default seed data in case Supabase table hasn't been migrated yet
 export const DEFAULT_PUBLIC_QUIZZES: Quiz[] = [

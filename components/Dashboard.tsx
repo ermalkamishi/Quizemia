@@ -8,7 +8,6 @@ import {
   Sparkles,
   Play,
   Search,
-  Users,
   HelpCircle,
   Clock,
   Flame,
@@ -16,7 +15,6 @@ import {
   Upload,
   FileText,
   X,
-  Zap,
   Globe,
   User as UserIcon,
 } from "lucide-react";
@@ -32,15 +30,6 @@ import { useLanguage } from "@/context/LanguageContext";
 import { cn } from "@/lib/utils";
 
 const CATEGORIES = ["All", "General", "Geography", "Science", "Technology", "History", "Pop Culture"];
-
-const ROTATING_WORDS = [
-  { text: "High Energy", gradient: "from-amber-300 via-orange-400 to-red-400" },
-  { text: "Lightning Speed", gradient: "from-yellow-300 via-amber-400 to-orange-500" },
-  { text: "Epic Battles", gradient: "from-purple-300 via-pink-400 to-rose-400" },
-  { text: "Real-Time Arena", gradient: "from-cyan-300 via-blue-400 to-indigo-400" },
-  { text: "Playful Flow", gradient: "from-emerald-300 via-teal-400 to-cyan-400" },
-  { text: "AI Superpowers", gradient: "from-fuchsia-300 via-purple-400 to-blue-400" },
-];
 
 const QUICK_TOPICS = [
   "🧬 Photosynthesis",

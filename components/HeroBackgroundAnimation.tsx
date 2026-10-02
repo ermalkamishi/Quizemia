@@ -132,7 +132,7 @@ function MarqueeRow({ items, duration, topPercent, delayOffset = 0, opacityLevel
                       ease: "easeInOut",
                     },
               }}
-              className="relative flex items-center justify-center p-2.5 rounded-full bg-white/[0.04] border border-white/[0.08] backdrop-blur-[1px] transition-transform"
+              className="relative flex items-center justify-center p-2.5 rounded-full bg-white/[0.04] border border-white/[0.08] transition-transform"
               style={{
                 filter: `drop-shadow(0 0 6px ${item.glowColor})`,
               }}

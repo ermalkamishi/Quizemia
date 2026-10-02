@@ -115,8 +115,7 @@ export function useToast() {
   const context = React.useContext(ToastContext);
   if (!context) {
     return {
-      toast: (opts: { title: string; description?: string; type?: ToastType; duration?: number }) =>
-        console.log(opts.title),
+      toast: () => {},
       dismiss: () => {},
       toasts: [],
     };
