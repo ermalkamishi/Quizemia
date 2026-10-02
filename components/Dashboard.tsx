@@ -342,7 +342,7 @@ export default function Dashboard() {
                 )}
               >
                 <span>🇬🇧</span>
-                <span>English</span>
+                <span>{language === "al" ? "Anglisht" : "English"}</span>
               </button>
               <button
                 type="button"
@@ -473,7 +473,7 @@ export default function Dashboard() {
                           {isOfficial ? (
                             <div className="bg-zinc-900/80 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
                               <Sparkles className="h-3 w-3 text-amber-300 fill-amber-300" />
-                              <span>Official</span>
+                              <span>{language === "al" ? "Zyrtar" : "Official"}</span>
                             </div>
                           ) : (
                             <div className="bg-blue-950/80 backdrop-blur-md text-blue-200 border border-blue-500/30 text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-sm max-w-[130px] truncate">
@@ -489,7 +489,7 @@ export default function Dashboard() {
                           {quiz.title}
                         </CardTitle>
                         <CardDescription className="line-clamp-2 mt-1.5 text-xs sm:text-sm">
-                          {quiz.description || "A fun, fast-paced interactive quiz."}
+                          {quiz.description || (language === "al" ? "Një kuiz interaktiv i shpejtë dhe argëtues." : "A fun, fast-paced interactive quiz.")}
                         </CardDescription>
                       </CardHeader>
 

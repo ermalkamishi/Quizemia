@@ -362,7 +362,11 @@ export function AuthModal() {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-3.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors cursor-pointer"
-                  title={showPassword ? "Hide password" : "Show password"}
+                  title={
+                    showPassword
+                      ? (language === "al" ? "Fshih fjalëkalimin" : "Hide password")
+                      : (language === "al" ? "Shfaq fjalëkalimin" : "Show password")
+                  }
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>

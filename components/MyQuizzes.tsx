@@ -58,13 +58,13 @@ export default function MyQuizzes() {
     if (navigator.clipboard) {
       navigator.clipboard.writeText(url);
       toast({
-        title: "Link Copied!",
-        description: `Quiz URL copied to clipboard: ${quiz.title}`,
+        title: language === "al" ? "Lidhja u Kopjua!" : "Link Copied!",
+        description: language === "al" ? `Adresa e kuizit u kopjua: ${quiz.title}` : `Quiz URL copied to clipboard: ${quiz.title}`,
         type: "success",
       });
     } else {
       toast({
-        title: "Share URL",
+        title: language === "al" ? "Lidhja e Kuizit" : "Share URL",
         description: url,
         type: "info",
       });
@@ -79,8 +79,8 @@ export default function MyQuizzes() {
     setDeleting(false);
     setQuizToDelete(null);
     toast({
-      title: "Quiz Deleted",
-      description: "The quiz was removed from your library.",
+      title: language === "al" ? "Kuizi u Fshi" : "Quiz Deleted",
+      description: language === "al" ? "Kuizi u hoq nga biblioteka juaj." : "The quiz was removed from your library.",
       type: "info",
     });
   };

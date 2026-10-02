@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import {
@@ -36,32 +36,36 @@ interface DemoStep {
   badge: string;
 }
 
-const DEMO_STEPS: DemoStep[] = [
-  {
-    id: 0,
-    title: "1. Upload Notes / Image",
-    shortTitle: "Upload Notes",
-    icon: Upload,
-    badge: "Input Source",
-  },
-  {
-    id: 1,
-    title: "2. AI Processing",
-    shortTitle: "AI Synthesis",
-    icon: BrainCircuit,
-    badge: "Smart Generation",
-  },
-  {
-    id: 2,
-    title: "3. Play & Compete",
-    shortTitle: "Play Arena",
-    icon: Gamepad2,
-    badge: "Interactive Quiz",
-  },
-];
-
 export function HowToUseDemo() {
   const { language, t } = useLanguage();
+
+  const demoSteps: DemoStep[] = useMemo(
+    () => [
+      {
+        id: 0,
+        title: language === "al" ? "1. Ngarko Shënime / Foto" : "1. Upload Notes / Image",
+        shortTitle: language === "al" ? "Ngarko Shënime" : "Upload Notes",
+        icon: Upload,
+        badge: language === "al" ? "Burimi i të Dhënave" : "Input Source",
+      },
+      {
+        id: 1,
+        title: language === "al" ? "2. Përpunimi me AI" : "2. AI Processing",
+        shortTitle: language === "al" ? "Përpunimi Inteligjent" : "AI Synthesis",
+        icon: BrainCircuit,
+        badge: language === "al" ? "Gjenerim Inteligjent" : "Smart Generation",
+      },
+      {
+        id: 2,
+        title: language === "al" ? "3. Luaj & Garoj" : "3. Play & Compete",
+        shortTitle: language === "al" ? "Luaj në Arenë" : "Play Arena",
+        icon: Gamepad2,
+        badge: language === "al" ? "Kuiz Interaktiv" : "Interactive Quiz",
+      },
+    ],
+    [language]
+  );
+
   const [activeStep, setActiveStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
 
@@ -79,22 +83,22 @@ export function HowToUseDemo() {
     if (!isPlaying) return;
 
     const timer = setInterval(() => {
-      setActiveStep((prev) => (prev + 1) % DEMO_STEPS.length);
+      setActiveStep((prev) => (prev + 1) % demoSteps.length);
     }, STEP_DURATION_MS);
 
     return () => clearInterval(timer);
-  }, [isPlaying]);
+  }, [isPlaying, demoSteps.length]);
 
   const handleSelectStep = (stepIdx: number) => {
     setActiveStep(stepIdx);
   };
 
   const handlePrevStep = () => {
-    setActiveStep((prev) => (prev - 1 + DEMO_STEPS.length) % DEMO_STEPS.length);
+    setActiveStep((prev) => (prev - 1 + demoSteps.length) % demoSteps.length);
   };
 
   const handleNextStep = () => {
-    setActiveStep((prev) => (prev + 1) % DEMO_STEPS.length);
+    setActiveStep((prev) => (prev + 1) % demoSteps.length);
   };
 
   // Step 3 Gameplay: Interactive Timer (pauses when demo is paused)
@@ -201,7 +205,9 @@ export function HowToUseDemo() {
               {isPlaying ? (
                 <>
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-emerald-400 hidden sm:inline">Demo </span>
+                  <span className="text-emerald-400 hidden sm:inline">
+                    {language === "al" ? "Prezantim Live" : "Demo Live"}
+                  </span>
                 </>
               ) : (
                 <>
@@ -216,7 +222,7 @@ export function HowToUseDemo() {
 
           {/* Interactive Steps Filter Tabs */}
           <div className="grid grid-cols-3 border-b border-white/10 bg-zinc-900/60 p-1.5 sm:p-2 gap-1.5">
-            {DEMO_STEPS.map((step) => {
+            {demoSteps.map((step) => {
               const Icon = step.icon;
               const isActive = activeStep === step.id;
 
@@ -286,11 +292,13 @@ export function HowToUseDemo() {
                         01
                       </span>
                       <h3 className="font-extrabold text-base sm:text-lg text-white">
-                        Paste Lesson Material or Drop Diagram Image
+                        {language === "al"
+                          ? "Ngjitni Materialin e Mësimit ose Ngarkoni Foto Diagramë"
+                          : "Paste Lesson Material or Drop Diagram Image"}
                       </h3>
                     </div>
                     <Badge variant="outline" className="text-zinc-400 border-white/15 text-[11px]">
-                      Instant Multimodal Input
+                      {language === "al" ? "Hyrje Multimodale e Shpejtë" : "Instant Multimodal Input"}
                     </Badge>
                   </div>
 
@@ -299,25 +307,41 @@ export function HowToUseDemo() {
                     <div className="relative p-4 sm:p-5 rounded-2xl bg-zinc-800/60 border border-white/10 space-y-3">
                       <div className="flex items-center justify-between text-xs text-zinc-400 font-semibold">
                         <span className="flex items-center gap-1.5 text-zinc-300">
-                          <FileText className="h-4 w-4 text-blue-400" /> Lesson Transcript / Notes
+                          <FileText className="h-4 w-4 text-blue-400" />
+                          <span>{language === "al" ? "Transkripti / Shënimet e Mësimit" : "Lesson Transcript / Notes"}</span>
                         </span>
                         <span className="text-[10px] text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">
-                          ✓ Paste Ready
+                          {language === "al" ? "✓ Gati për Ngjitje" : "✓ Paste Ready"}
                         </span>
                       </div>
 
                       <div className="p-3.5 rounded-xl bg-zinc-950/80 border border-white/5 font-mono text-xs sm:text-[13px] text-zinc-300 leading-relaxed min-h-[140px]">
-                        <p className="text-zinc-200">
-                          <span className="text-blue-400 font-bold"># Biology 101: Cellular Respiration</span>
-                          <br />
-                          Photosynthesis takes place in chloroplasts. Light reactions split water into
-                          protons, electrons, and oxygen gas, creating high-energy <span className="text-amber-300 font-bold">ATP &amp; NADPH</span> molecules.
-                        </p>
+                        {language === "al" ? (
+                          <p className="text-zinc-200">
+                            <span className="text-blue-400 font-bold"># Biologji 101: Frymëmarrja Qelizore</span>
+                            <br />
+                            Fotosinteza zhvillohet në kloroplaste. Reaksionet e dritës zbërthejnë ujin në
+                            protone, elektrone dhe gaz oksigjen, duke krijuar molekula me energji të lartë{" "}
+                            <span className="text-amber-300 font-bold">ATP &amp; NADPH</span>.
+                          </p>
+                        ) : (
+                          <p className="text-zinc-200">
+                            <span className="text-blue-400 font-bold"># Biology 101: Cellular Respiration</span>
+                            <br />
+                            Photosynthesis takes place in chloroplasts. Light reactions split water into
+                            protons, electrons, and oxygen gas, creating high-energy{" "}
+                            <span className="text-amber-300 font-bold">ATP &amp; NADPH</span> molecules.
+                          </p>
+                        )}
                       </div>
 
                       <p className="text-[11px] text-zinc-400 flex items-center gap-1.5">
                         <Check className="h-3.5 w-3.5 text-emerald-400" />
-                        Key terms and concepts automatically identified
+                        <span>
+                          {language === "al"
+                            ? "Termat dhe konceptet kyçe identifikohen automatikisht"
+                            : "Key terms and concepts automatically identified"}
+                        </span>
                       </p>
                     </div>
 
@@ -325,7 +349,8 @@ export function HowToUseDemo() {
                     <div className="relative p-4 sm:p-5 rounded-2xl bg-zinc-800/60 border border-white/10 flex flex-col justify-between space-y-3">
                       <div className="flex items-center justify-between text-xs text-zinc-400 font-semibold">
                         <span className="flex items-center gap-1.5 text-zinc-300">
-                          <ImageIcon className="h-4 w-4 text-purple-400" /> Textbook Diagram
+                          <ImageIcon className="h-4 w-4 text-purple-400" />
+                          <span>{language === "al" ? "Diagramë nga Libri" : "Textbook Diagram"}</span>
                         </span>
                         <span className="text-[10px] text-purple-400 bg-purple-950/60 border border-purple-500/30 px-2 py-0.5 rounded-full font-bold">
                           Vision AI
@@ -342,9 +367,14 @@ export function HowToUseDemo() {
                           <p className="text-xs font-bold text-zinc-200 truncate">
                             chloroplast_thylakoid_cycle.png
                           </p>
-                          <p className="text-[11px] text-zinc-400">1.4 MB • Diagram Analyzed</p>
+                          <p className="text-[11px] text-zinc-400">
+                            {language === "al" ? "1.4 MB • Diagramë e Analizuar" : "1.4 MB • Diagram Analyzed"}
+                          </p>
                           <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1 mt-1">
-                            <Check className="h-3 w-3" /> Ready for question generation
+                            <Check className="h-3 w-3" />
+                            <span>
+                              {language === "al" ? "Gati për gjenerimin e pyetjeve" : "Ready for question generation"}
+                            </span>
                           </span>
                         </div>
                       </div>
@@ -353,7 +383,7 @@ export function HowToUseDemo() {
                       <div className="relative pt-1">
                         <div className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20">
                           <Sparkles className="h-4 w-4" />
-                          <span>Generate 5-Question Quiz</span>
+                          <span>{language === "al" ? "Gjenero Kuiz me 5 Pyetje" : "Generate 5-Question Quiz"}</span>
                         </div>
 
                         {/* Animated Simulated Cursor */}
@@ -372,7 +402,7 @@ export function HowToUseDemo() {
                         >
                           <MousePointer className="h-5 w-5 fill-white text-zinc-950" />
                           <span className="text-[10px] font-black bg-blue-500 px-1.5 py-0.5 rounded shadow">
-                            Click!
+                            {language === "al" ? "Kliko!" : "Click!"}
                           </span>
                         </motion.div>
                       </div>
@@ -402,10 +432,12 @@ export function HowToUseDemo() {
 
                   <div className="space-y-2">
                     <h3 className="text-xl sm:text-2xl font-black text-white">
-                      AI Synthesis in Progress...
+                      {language === "al" ? "Sinteza me AI në Proces..." : "AI Synthesis in Progress..."}
                     </h3>
                     <p className="text-xs sm:text-sm text-zinc-400 max-w-md mx-auto">
-                      Parsing core educational concepts, balancing distractors, and configuring Kahoot-style tactile options.
+                      {language === "al"
+                        ? "Nxjerrja e koncepteve kryesore mësimore, balancimi i opsioneve dhe konfigurimi i përgjigjeve interaktive."
+                        : "Parsing core educational concepts, balancing distractors, and configuring Kahoot-style tactile options."}
                     </p>
                   </div>
 
@@ -419,7 +451,9 @@ export function HowToUseDemo() {
                     >
                       <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
                       <span className="text-xs sm:text-sm font-semibold text-zinc-200">
-                        Extracted 4 key principles from lesson notes
+                        {language === "al"
+                          ? "U nxorën 4 parime kryesore nga shënimet e mësimit"
+                          : "Extracted 4 key principles from lesson notes"}
                       </span>
                     </motion.div>
 
@@ -431,7 +465,9 @@ export function HowToUseDemo() {
                     >
                       <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
                       <span className="text-xs sm:text-sm font-semibold text-zinc-200">
-                        Synthesized plausible distractors &amp; assigned Kahoot shapes
+                        {language === "al"
+                          ? "U krijuan alternativa bindëse & u caktuan simbolet grafike"
+                          : "Synthesized plausible distractors & assigned Kahoot shapes"}
                       </span>
                     </motion.div>
 
@@ -443,7 +479,9 @@ export function HowToUseDemo() {
                     >
                       <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
                       <span className="text-xs sm:text-sm font-semibold text-zinc-200">
-                        Configured 15-second timers &amp; speed bonus algorithm
+                        {language === "al"
+                          ? "U konfiguruan kohëmatësit 15-sekondësh & algoritmi i shpejtësisë"
+                          : "Configured 15-second timers & speed bonus algorithm"}
                       </span>
                     </motion.div>
                   </div>
@@ -457,7 +495,9 @@ export function HowToUseDemo() {
                         transition={{ duration: 2.2, repeat: Infinity }}
                       />
                     </div>
-                    <span className="text-[11px] font-mono text-zinc-400">100% Ready for Arena Play</span>
+                    <span className="text-[11px] font-mono text-zinc-400">
+                      {language === "al" ? "100% Gati për Arenë" : "100% Ready for Arena Play"}
+                    </span>
                   </div>
                 </motion.div>
               )}
@@ -478,9 +518,11 @@ export function HowToUseDemo() {
                       <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-blue-500/20 text-blue-400 font-black text-xs border border-blue-500/30">
                         1
                       </span>
-                      <span className="text-xs font-bold text-zinc-300">of 5 Questions</span>
+                      <span className="text-xs font-bold text-zinc-300">
+                        {language === "al" ? "nga 5 Pyetje" : "of 5 Questions"}
+                      </span>
                       <Badge variant="outline" className="hidden sm:inline-flex text-[10px] text-zinc-400 border-white/10">
-                        🌱 Photosynthesis
+                        {language === "al" ? "🌱 Fotosinteza" : "🌱 Photosynthesis"}
                       </Badge>
                     </div>
 
@@ -529,13 +571,17 @@ export function HowToUseDemo() {
                           className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-emerald-500 to-green-600 text-white font-black text-xs shadow-xl shadow-emerald-500/30 border border-white flex items-center gap-1.5 z-20"
                         >
                           <Sparkles className="h-3.5 w-3.5" />
-                          <span>CORRECT! +1,000 SPEED POINTS</span>
+                          <span>
+                            {language === "al" ? "SAKTË! +1,000 PIKË SHPEJTËSIE" : "CORRECT! +1,000 SPEED POINTS"}
+                          </span>
                         </motion.div>
                       )}
                     </AnimatePresence>
 
                     <h4 className="text-base sm:text-xl font-black text-white leading-snug">
-                      What is the primary energy molecule produced during the light-dependent reactions of photosynthesis?
+                      {language === "al"
+                        ? "Cila është molekula kryesore e energjisë e prodhuar gjatë reaksioneve të varura nga drita të fotosintezës?"
+                        : "What is the primary energy molecule produced during the light-dependent reactions of photosynthesis?"}
                     </h4>
                   </div>
 
@@ -577,7 +623,9 @@ export function HowToUseDemo() {
                       )}
                     >
                       <span className="text-lg sm:text-xl font-black opacity-90">◆</span>
-                      <span className="flex-1 text-xs sm:text-base font-extrabold truncate">Lactic Acid</span>
+                      <span className="flex-1 text-xs sm:text-base font-extrabold truncate">
+                        {language === "al" ? "Acidi Laktik" : "Lactic Acid"}
+                      </span>
                     </motion.button>
 
                     {/* Yellow Circle */}
@@ -596,7 +644,9 @@ export function HowToUseDemo() {
                       )}
                     >
                       <span className="text-lg sm:text-xl font-black opacity-90">●</span>
-                      <span className="flex-1 text-xs sm:text-base font-extrabold truncate">Chlorophyll A</span>
+                      <span className="flex-1 text-xs sm:text-base font-extrabold truncate">
+                        {language === "al" ? "Klorofili A" : "Chlorophyll A"}
+                      </span>
                     </motion.button>
 
                     {/* Green Square */}
@@ -615,14 +665,21 @@ export function HowToUseDemo() {
                       )}
                     >
                       <span className="text-lg sm:text-xl font-black opacity-90">■</span>
-                      <span className="flex-1 text-xs sm:text-base font-extrabold truncate">Carbon Monoxide</span>
+                      <span className="flex-1 text-xs sm:text-base font-extrabold truncate">
+                        {language === "al" ? "Monoksidi i Karbonit" : "Carbon Monoxide"}
+                      </span>
                     </motion.button>
                   </div>
 
                   {/* Reset Try-Again bar for Step 3 */}
                   <div className="flex items-center justify-between pt-1">
                     <p className="text-[11px] text-zinc-400">
-                      💡 <em>Click the red button above to test real live answering!</em>
+                      💡{" "}
+                      <em>
+                        {language === "al"
+                          ? "Kliko butonin e kuq lart për të testuar përgjigjen e drejtpërdrejtë!"
+                          : "Click the red button above to test real live answering!"}
+                      </em>
                     </p>
                     {selectedAnswer && (
                       <Button
@@ -632,7 +689,7 @@ export function HowToUseDemo() {
                         className="h-7 text-xs font-bold gap-1 text-zinc-300 border-white/15 bg-white/5 hover:bg-white/10"
                       >
                         <RotateCcw className="h-3 w-3" />
-                        <span>Try Again</span>
+                        <span>{language === "al" ? "Provo Përsëri" : "Try Again"}</span>
                       </Button>
                     )}
                   </div>
@@ -647,11 +704,13 @@ export function HowToUseDemo() {
           <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-t border-white/10 bg-zinc-950/80">
             {/* Step Helper Text */}
             <div className="flex items-center gap-2 text-xs text-zinc-400 font-medium">
-              <span className="font-bold text-zinc-300">Step {activeStep + 1} of 3:</span>
-              <span className="text-zinc-300 hidden sm:inline">{DEMO_STEPS[activeStep].title}</span>
+              <span className="font-bold text-zinc-300">
+                {language === "al" ? `Hapi ${activeStep + 1} nga 3:` : `Step ${activeStep + 1} of 3:`}
+              </span>
+              <span className="text-zinc-300 hidden sm:inline">{demoSteps[activeStep].title}</span>
               {!isPlaying && (
                 <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full ml-1">
-                  Paused
+                  {language === "al" ? "Ndalur" : "Paused"}
                 </span>
               )}
             </div>
@@ -663,10 +722,10 @@ export function HowToUseDemo() {
                 variant="outline"
                 onClick={handlePrevStep}
                 className="h-8 px-2.5 rounded-full text-xs font-bold gap-1 border-white/15 bg-white/5 hover:bg-white/15 text-zinc-300 hover:text-white cursor-pointer"
-                title="Previous step"
+                title={language === "al" ? "Hapi i mëparshëm" : "Previous step"}
               >
                 <ChevronLeft className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Prev</span>
+                <span className="hidden sm:inline">{language === "al" ? "Mbrapa" : "Prev"}</span>
               </Button>
 
               <Button
@@ -679,17 +738,21 @@ export function HowToUseDemo() {
                     ? "border-white/15 bg-white/10 hover:bg-white/20 text-white"
                     : "border-amber-400/40 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 ring-1 ring-amber-400/30"
                 )}
-                title={isPlaying ? "Pause auto-sliding showcase" : "Resume auto-sliding showcase"}
+                title={
+                  isPlaying
+                    ? (language === "al" ? "Ndalo lëvizjen automatike" : "Pause auto-sliding showcase")
+                    : (language === "al" ? "Vazhdo lëvizjen automatike" : "Resume auto-sliding showcase")
+                }
               >
                 {isPlaying ? (
                   <>
                     <Pause className="h-3.5 w-3.5 fill-current" />
-                    <span>Pause</span>
+                    <span>{language === "al" ? "Ndalo" : "Pause"}</span>
                   </>
                 ) : (
                   <>
                     <Play className="h-3.5 w-3.5 fill-current" />
-                    <span>Resume</span>
+                    <span>{language === "al" ? "Vazhdo" : "Resume"}</span>
                   </>
                 )}
               </Button>
@@ -699,9 +762,9 @@ export function HowToUseDemo() {
                 variant="outline"
                 onClick={handleNextStep}
                 className="h-8 px-2.5 rounded-full text-xs font-bold gap-1 border-white/15 bg-white/5 hover:bg-white/15 text-zinc-300 hover:text-white cursor-pointer"
-                title="Next step"
+                title={language === "al" ? "Hapi tjetër" : "Next step"}
               >
-                <span className="hidden sm:inline">Next</span>
+                <span className="hidden sm:inline">{language === "al" ? "Para" : "Next"}</span>
                 <ChevronRight className="h-3.5 w-3.5" />
               </Button>
             </div>

@@ -607,17 +607,25 @@ export default function Quiz() {
     if (result.success && result.quiz) {
       if (user) {
         toast({
-          title: publishChoice ? "Quiz Published Publicly! 🌍" : "Private Quiz Saved! 🔒",
+          title: publishChoice
+            ? (language === "al" ? "Kuizi u Publikua Publikisht! 🌍" : "Quiz Published Publicly! 🌍")
+            : (language === "al" ? "Kuizi Privat u Ruajt! 🔒" : "Private Quiz Saved! 🔒"),
           description: publishChoice
-            ? `"${result.quiz.title}" is published to the Arena so anyone can play!`
-            : `"${result.quiz.title}" is saved as private. Only direct link holders can play!`,
+            ? (language === "al"
+                ? `"${result.quiz.title}" u publikua në Arenë që të gjithë të mund të luajnë!`
+                : `"${result.quiz.title}" is published to the Arena so anyone can play!`)
+            : (language === "al"
+                ? `"${result.quiz.title}" u ruajt si privat. Vetëm ata me lidhje direkte mund të luajnë!`
+                : `"${result.quiz.title}" is saved as private. Only direct link holders can play!`),
           type: "success",
         });
         setAvailableQuizzes((prev) => [result.quiz!, ...prev]);
       } else {
         toast({
-          title: "Guest Session Started",
-          description: `Playing "${result.quiz.title}". (Not saved to library as guest)`,
+          title: language === "al" ? "Sesioni i Mysafirit Filloi" : "Guest Session Started",
+          description: language === "al"
+            ? `Po luani "${result.quiz.title}". (Nuk ruhet në bibliotekë si mysafir)`
+            : `Playing "${result.quiz.title}". (Not saved to library as guest)`,
           type: "info",
         });
       }
@@ -625,8 +633,8 @@ export default function Quiz() {
       setMode("play");
     } else {
       toast({
-        title: "Save Failed",
-        description: result.error || "Could not save quiz. Please try again.",
+        title: language === "al" ? "Ruajtja Dështoi" : "Save Failed",
+        description: result.error || (language === "al" ? "Nuk mund të ruhej kuizi. Ju lutem provoni përsëri." : "Could not save quiz. Please try again."),
         type: "error",
       });
     }
@@ -686,7 +694,9 @@ export default function Quiz() {
           {loadingQuiz ? (
             <div className="text-center py-24 space-y-4">
               <div className="h-12 w-12 rounded-full border-4 border-blue-600 border-t-transparent animate-spin mx-auto" />
-              <p className="font-semibold text-zinc-600 dark:text-zinc-400">Loading arena...</p>
+              <p className="font-semibold text-zinc-600 dark:text-zinc-400">
+                {language === "al" ? "Po ngarkohet arena..." : "Loading arena..."}
+              </p>
             </div>
           ) : isGameOver ? (
             /* ================= Scoreboard / Podium Screen ================= */
@@ -701,34 +711,40 @@ export default function Quiz() {
 
               <div className="space-y-2">
                 <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-zinc-900 dark:text-zinc-50">
-                  Quiz Completed!
+                  {language === "al" ? "Kuizi Përfundoi!" : "Quiz Completed!"}
                 </h2>
                 <p className="text-zinc-500 dark:text-zinc-400 font-medium">
-                  {activeQuiz?.title || "Challenge Finished"}
+                  {activeQuiz?.title || (language === "al" ? "Sfida Përfundoi" : "Challenge Finished")}
                 </p>
               </div>
 
               {/* Score Metric Cards */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-2">
                 <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-800">
-                  <span className="text-xs font-semibold text-zinc-400 uppercase">Final Score</span>
+                  <span className="text-xs font-semibold text-zinc-400 uppercase">
+                    {language === "al" ? "Pikët Përfundimtare" : "Final Score"}
+                  </span>
                   <p className="text-2xl sm:text-3xl font-black text-amber-500 mt-1">
                     {user ? score.toLocaleString() : "0 pts"}
                   </p>
                   {!user && (
                     <span className="text-[10px] font-medium text-zinc-400 block mt-0.5">
-                      No points for guests
+                      {language === "al" ? "Pa pikë për mysafirët" : "No points for guests"}
                     </span>
                   )}
                 </div>
                 <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-800">
-                  <span className="text-xs font-semibold text-zinc-400 uppercase">Questions</span>
+                  <span className="text-xs font-semibold text-zinc-400 uppercase">
+                    {language === "al" ? "Pyetje" : "Questions"}
+                  </span>
                   <p className="text-2xl sm:text-3xl font-black text-blue-600 mt-1">
                     {totalQuestions}
                   </p>
                 </div>
                 <div className="col-span-2 sm:col-span-1 p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-800">
-                  <span className="text-xs font-semibold text-zinc-400 uppercase">Max Streak</span>
+                  <span className="text-xs font-semibold text-zinc-400 uppercase">
+                    {language === "al" ? "Seria Maksimale" : "Max Streak"}
+                  </span>
                   <p className="text-2xl sm:text-3xl font-black text-red-500 mt-1">
                     🔥 {streak}x
                   </p>
@@ -738,7 +754,9 @@ export default function Quiz() {
               {!user && (
                 <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-center space-y-2">
                   <p className="text-xs sm:text-sm font-semibold text-amber-900 dark:text-amber-200">
-                    Points are not awarded to guests for completing quizzes. Sign in to earn points, build streaks, and save quizzes!
+                    {language === "al"
+                      ? "Pikët nuk ruhen për vizitorët. Hyni për të fituar pikë, krijuar seri dhe ruajtur kuizet!"
+                      : "Points are not awarded to guests for completing quizzes. Sign in to earn points, build streaks, and save quizzes!"}
                   </p>
                   <Button
                     size="sm"
@@ -746,7 +764,7 @@ export default function Quiz() {
                     className="bg-amber-600 hover:bg-amber-700 text-white font-bold gap-1.5"
                   >
                     <Sparkles className="h-4 w-4" />
-                    <span>Sign In to Earn Points</span>
+                    <span>{language === "al" ? "Hyni për të Fituar Pikë" : "Sign In to Earn Points"}</span>
                   </Button>
                 </div>
               )}
@@ -758,7 +776,7 @@ export default function Quiz() {
                   className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold gap-2"
                 >
                   <RotateCcw className="h-4 w-4" />
-                  <span>Play Again</span>
+                  <span>{language === "al" ? "Luaj Përsëri" : "Play Again"}</span>
                 </Button>
                 <Button
                   variant="outline"
@@ -770,7 +788,7 @@ export default function Quiz() {
                   className="w-full sm:w-auto font-bold gap-2"
                 >
                   <Layers className="h-4 w-4" />
-                  <span>Choose Another Quiz</span>
+                  <span>{language === "al" ? "Zgjidh një Kuiz Tjetër" : "Choose Another Quiz"}</span>
                 </Button>
                 <Button
                   variant="ghost"
@@ -778,7 +796,7 @@ export default function Quiz() {
                   onClick={() => router.push("/dashboard")}
                   className="w-full sm:w-auto"
                 >
-                  Back to Dashboard
+                  {language === "al" ? "Kthehu te Paneli" : "Back to Dashboard"}
                 </Button>
               </div>
             </motion.div>
@@ -795,7 +813,9 @@ export default function Quiz() {
                       {currentQuestionIdx + 1}
                     </span>
                     <span className="text-xs sm:text-sm font-bold text-zinc-500 shrink-0">
-                      <span className="hidden sm:inline">of {totalQuestions} Questions</span>
+                      <span className="hidden sm:inline">
+                        {language === "al" ? `nga ${totalQuestions} Pyetje` : `of ${totalQuestions} Questions`}
+                      </span>
                       <span className="sm:hidden">/{totalQuestions}</span>
                     </span>
                     <button
@@ -806,10 +826,10 @@ export default function Quiz() {
                         router.replace("/quiz");
                       }}
                       className="text-xs font-semibold text-zinc-500 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400 hover:underline ml-0.5 sm:ml-1 cursor-pointer shrink-0"
-                      title="Exit Quiz"
+                      title={language === "al" ? "Dil nga Kuizi" : "Exit Quiz"}
                     >
-                      <span className="hidden sm:inline">← Change Quiz</span>
-                      <span className="sm:hidden">✕ Exit</span>
+                      <span className="hidden sm:inline">{language === "al" ? "← Ndrysho Kuizin" : "← Change Quiz"}</span>
+                      <span className="sm:hidden">{language === "al" ? "✕ Dil" : "✕ Exit"}</span>
                     </button>
                   </div>
 
@@ -862,7 +882,11 @@ export default function Quiz() {
                           onClick={handleNextQuestion}
                           className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-xs sm:text-sm px-2.5 sm:px-4 py-1 sm:py-1.5 h-7 sm:h-8 rounded-lg sm:rounded-xl shadow-md shadow-blue-500/25 animate-pulse cursor-pointer shrink-0"
                         >
-                          <span>{currentQuestionIdx + 1 === totalQuestions ? "Podium 🏆" : "Next →"}</span>
+                          <span>
+                            {currentQuestionIdx + 1 === totalQuestions
+                              ? (language === "al" ? "Podiumi 🏆" : "Podium 🏆")
+                              : (language === "al" ? "Tjetra →" : "Next →")}
+                          </span>
                         </Button>
                       </div>
                     ) : (
@@ -1244,7 +1268,7 @@ export default function Quiz() {
                                 {isDefault ? (
                                   <Badge className="bg-zinc-900/80 dark:bg-black/80 backdrop-blur-sm text-white border-0 text-[10px] font-bold gap-1 shadow-sm">
                                     <Sparkles className="h-3 w-3 text-amber-300 fill-amber-300" />
-                                    <span>Official</span>
+                                    <span>{language === "al" ? "Zyrtar" : "Official"}</span>
                                   </Badge>
                                 ) : (
                                   <Badge className="bg-blue-950/80 dark:bg-blue-900/80 backdrop-blur-sm text-blue-200 border border-blue-500/30 text-[10px] font-bold gap-1 shadow-sm max-w-[130px] truncate">
@@ -1260,7 +1284,7 @@ export default function Quiz() {
                                 {quiz.title}
                               </CardTitle>
                               <p className="text-xs text-zinc-500 line-clamp-2 mt-1 leading-relaxed">
-                                {quiz.description || "Interactive educational challenge."}
+                                {quiz.description || (language === "al" ? "Sfidë edukative interaktive." : "Interactive educational challenge.")}
                               </p>
                             </CardHeader>
 
@@ -1666,7 +1690,7 @@ export default function Quiz() {
                               : "border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 text-zinc-600 dark:text-zinc-400"
                           )}
                         >
-                          <span>English</span>
+                          <span>{language === "al" ? "Anglisht" : "English"}</span>
                         </button>
                         <button
                           type="button"
