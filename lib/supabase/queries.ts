@@ -611,7 +611,7 @@ export const DEFAULT_PUBLIC_QUIZZES: Quiz[] = [
     language: "al",
     creator_email: "Quizemia Official",
     is_public: true,
-    cover_image: "https://images.unsplash.com/photo-1596701062351-8c2c14d1fdd1?auto=format&fit=crop&w=800&q=80",
+    cover_image: "https://images.unsplash.com/photo-1687294088591-5e434c105bc1?auto=format&fit=crop&w=800&q=80",
     play_count: 312,
     created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
     questions: [
@@ -699,7 +699,7 @@ export const DEFAULT_PUBLIC_QUIZZES: Quiz[] = [
     language: "mk",
     creator_email: "Quizemia Official",
     is_public: true,
-    cover_image: "https://images.unsplash.com/photo-1590483253724-c187bc970632?auto=format&fit=crop&w=800&q=80",
+    cover_image: "https://images.unsplash.com/photo-1611845528017-75215e6d662c?auto=format&fit=crop&w=800&q=80",
     play_count: 289,
     created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
     questions: [
@@ -815,23 +815,20 @@ function deleteLocalQuiz(id: string) {
  * Fetch all public quizzes for the Dashboard
  */
 export async function fetchPublicQuizzes(): Promise<Quiz[]> {
+  const localPublic = getLocalQuizzes().filter((q) => q.is_public);
   try {
-    const { data, error } = await supabase
-      .from("quizzes")
-      .select("*, questions(*)")
-      .eq("is_public", true)
-      .order("created_at", { ascending: false });
-
-    if (error || !data || data.length === 0) {
-      // Merge default public with any user-created public quizzes in localStorage
-      const localPublic = getLocalQuizzes().filter((q) => q.is_public);
-      return [...localPublic, ...DEFAULT_PUBLIC_QUIZZES];
+    // Route through internal API endpoint to avoid direct client 404 network logs
+    const res = await fetch("/api/quizzes?type=public");
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data.quizzes) && data.quizzes.length > 0) {
+        const remoteIds = new Set(data.quizzes.map((q: Quiz) => q.id));
+        const extraLocal = localPublic.filter((q) => !remoteIds.has(q.id));
+        return [...data.quizzes, ...extraLocal, ...DEFAULT_PUBLIC_QUIZZES];
+      }
     }
-
-    return data as Quiz[];
+    return [...localPublic, ...DEFAULT_PUBLIC_QUIZZES];
   } catch (err) {
-    console.warn("Using fallback public quizzes:", err);
-    const localPublic = getLocalQuizzes().filter((q) => q.is_public);
     return [...localPublic, ...DEFAULT_PUBLIC_QUIZZES];
   }
 }
@@ -845,26 +842,21 @@ export async function fetchUserQuizzes(userId?: string | null): Promise<Quiz[]> 
     return [];
   }
 
-  const localList = getLocalQuizzes();
+  const localList = getLocalQuizzes().filter((q) => q.user_id === userId);
 
   try {
-    const { data, error } = await supabase
-      .from("quizzes")
-      .select("*, questions(*)")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false });
-
-    if (error || !data) {
-      return localList.filter((q) => q.user_id === userId);
+    const res = await fetch(`/api/quizzes?type=user&userId=${encodeURIComponent(userId)}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data.quizzes) && data.quizzes.length > 0) {
+        const remoteIds = new Set(data.quizzes.map((q: Quiz) => q.id));
+        const extraLocal = localList.filter((q) => !remoteIds.has(q.id));
+        return [...data.quizzes, ...extraLocal];
+      }
     }
-
-    // Merge with any local quizzes that match this user
-    const dbIds = new Set(data.map((q) => q.id));
-    const extraLocal = localList.filter((q) => !dbIds.has(q.id) && q.user_id === userId);
-    return [...data, ...extraLocal] as Quiz[];
-  } catch (err) {
-    console.warn("Using local user quizzes:", err);
-    return localList.filter((q) => q.user_id === userId);
+    return localList;
+  } catch {
+    return localList;
   }
 }
 
@@ -885,24 +877,15 @@ export async function fetchQuizById(quizId: string): Promise<Quiz | null> {
   }
 
   try {
-    const { data, error } = await supabase
-      .from("quizzes")
-      .select("*, questions(*)")
-      .eq("id", quizId)
-      .single();
-
-    if (error || !data) {
-      return null;
+    const res = await fetch(`/api/quizzes?type=single&id=${encodeURIComponent(quizId)}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.quiz) {
+        return data.quiz as Quiz;
+      }
     }
-
-    // Sort questions by order_index
-    if (data.questions && Array.isArray(data.questions)) {
-      data.questions.sort((a: Question, b: Question) => a.order_index - b.order_index);
-    }
-
-    return data as Quiz;
-  } catch (err) {
-    console.error("Error fetching quiz:", err);
+    return null;
+  } catch {
     return null;
   }
 }
@@ -913,13 +896,14 @@ export async function fetchQuizById(quizId: string): Promise<Quiz | null> {
 export async function createQuizWithQuestions(
   input: CreateQuizInput,
   userId?: string | null,
-  userEmail?: string | null
+  userEmailOrNickname?: string | null
 ): Promise<{ success: boolean; quiz?: Quiz; error?: string }> {
   const quizId = crypto.randomUUID();
+  const authorTag = userEmailOrNickname?.trim() || "Quizemia Creator";
   const newQuiz: Quiz = {
     id: quizId,
     user_id: userId || null,
-    creator_email: userEmail || "Anonymous Creator",
+    creator_email: authorTag,
     title: input.title,
     description: input.description,
     category: input.category || "General",
@@ -943,47 +927,16 @@ export async function createQuizWithQuestions(
     saveLocalQuiz(newQuiz);
 
     try {
-      const baseInsertPayload = {
-        id: quizId,
-        user_id: userId,
-        creator_email: userEmail || null,
-        title: input.title,
-        description: input.description,
-        category: input.category,
-        language: input.language || "en",
-        is_public: input.is_public,
-        cover_image: newQuiz.cover_image,
-        play_count: 0,
-      };
-
-      let { error: quizError } = await supabase.from("quizzes").insert([baseInsertPayload]);
-
-      // If the column 'language' does not exist in the remote database yet, retry without it
-      if (quizError && (quizError.message?.includes("language") || quizError.code === "PGRST204")) {
-        const { language: _lang, ...payloadWithoutLang } = baseInsertPayload;
-        const retryResult = await supabase.from("quizzes").insert([payloadWithoutLang]);
-        quizError = retryResult.error;
-      }
-
-      if (!quizError && input.questions.length > 0) {
-        const questionsToInsert = newQuiz.questions!.map((q) => ({
-          id: q.id,
-          quiz_id: quizId,
-          question_text: q.question_text,
-          media_url: q.media_url || null,
-          time_limit: q.time_limit,
-          points: q.points,
-          order_index: q.order_index,
-          options: q.options,
-        }));
-
-        await supabase.from("questions").insert(questionsToInsert);
-      }
-
+      await fetch("/api/quizzes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quiz: newQuiz,
+          questions: newQuiz.questions || [],
+        }),
+      });
       return { success: true, quiz: newQuiz };
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Failed to sync to database";
-      console.warn("Saved locally, DB sync failed:", message);
+    } catch {
       return { success: true, quiz: newQuiz };
     }
   }
@@ -998,7 +951,9 @@ export async function createQuizWithQuestions(
 export async function deleteQuiz(quizId: string): Promise<boolean> {
   deleteLocalQuiz(quizId);
   try {
-    await supabase.from("quizzes").delete().eq("id", quizId);
+    await fetch(`/api/quizzes?id=${encodeURIComponent(quizId)}`, {
+      method: "DELETE",
+    });
     return true;
   } catch {
     return true;

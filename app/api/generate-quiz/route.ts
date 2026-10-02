@@ -167,17 +167,26 @@ export async function POST(req: NextRequest) {
 - Do NOT skip important information. Ensure questions are diverse, challenging, and non-repetitive.`;
     }
 
-    // Language instructions
+    // Strict language instructions that will NEVER be overridden by prompt language or source doc language
     let langInstruction = "";
+    let langLabel = "";
     if (language === "al") {
-      langInstruction =
-        "GJUHA E DETYRUESHME: SHQIP (Albanian). Titulli, përshkrimi, pyetjet dhe të 4 opsionet DUHET të jenë të shkruara në gjuhën shqipe me gramatikë të pastër dhe terminologji të saktë.";
+      langLabel = "SHQIP (ALBANIAN)";
+      langInstruction = `CRITICAL MANDATORY LANGUAGE: SHQIP (ALBANIAN).
+- Every single question ("question_text"), all 4 options ("text"), the "title", and the "description" MUST BE WRITTEN IN ALBANIAN (Gjuhën Shqipe).
+- EVEN IF the user prompt, topic, uploaded document, slides, or PDF are written in English or another language, YOU MUST TRANSLATE the concepts and output ALL questions and options completely in natural, fluent ALBANIAN.
+- ABSOLUTELY DO NOT output any English question texts or English options.`;
     } else if (language === "mk") {
-      langInstruction =
-        "ЗАДОЛЖИТЕЛЕН ЈАЗИК: МАКЕДОНСКИ (Macedonian). Насловот, описот, прашањата и сите 4 опции МОРА да бидат напишани на македонски јазик со кирилично писмо.";
+      langLabel = "МАКЕДОНСКИ (MACEDONIAN)";
+      langInstruction = `CRITICAL MANDATORY LANGUAGE: МАКЕДОНСКИ (MACEDONIAN).
+- Every single question ("question_text"), all 4 options ("text"), the "title", and the "description" MUST BE WRITTEN IN MACEDONIAN using Cyrillic script.
+- EVEN IF the source material or user prompt is in English, YOU MUST TRANSLATE and output all questions and options in Macedonian.
+- ABSOLUTELY DO NOT output any English questions when Macedonian is requested.`;
     } else {
-      langInstruction =
-        "MANDATORY LANGUAGE: ENGLISH. The title, description, questions, and all 4 options MUST be written in English.";
+      langLabel = "ENGLISH";
+      langInstruction = `CRITICAL MANDATORY LANGUAGE: ENGLISH.
+- The title, description, every question ("question_text"), and all 4 options ("text") MUST BE WRITTEN IN ENGLISH.
+- If the source material is in another language, translate it and output completely in English.`;
     }
 
     const systemPrompt = `You are Quizemia's master educational quiz generator.
@@ -189,11 +198,12 @@ ${langInstruction}
 RULES:
 1. Every question must have EXACTLY 4 answer options with IDs "a", "b", "c", "d".
 2. EXACTLY ONE option per question must have "is_correct": true, and the other 3 must be "is_correct": false.
-3. Distractors (wrong answers) must be plausible, educational, and realistic.
-4. Time limit for each question should be 15, 20, or 30 seconds (integer).
-5. Points should be 1000 for each question.
-6. Provide an engaging quiz "title", a concise "description", and choose the best matching "category" from: "General", "Science", "Geography", "Technology", "History", "Pop Culture".
-7. Return ONLY valid JSON strictly adhering to the schema below. No markdown formatting, no commentary.
+3. CRITICAL SHUFFLING: The correct answer MUST be randomly and unpredictably placed among "a", "b", "c", and "d". DO NOT always put the correct answer in the same position.
+4. Distractors (wrong answers) must be plausible, educational, and realistic.
+5. Time limit for each question should be 15, 20, or 30 seconds (integer).
+6. Points should be 1000 for each question.
+7. Provide an engaging quiz "title", a concise "description", and choose the best matching "category" from: "General", "Science", "Geography", "Technology", "History", "Pop Culture".
+8. Return ONLY valid JSON strictly adhering to the schema below. No markdown formatting, no commentary.
 
 SCHEMA:
 {
@@ -206,8 +216,8 @@ SCHEMA:
       "time_limit": 20,
       "points": 1000,
       "options": [
-        { "id": "a", "text": "string", "is_correct": true },
-        { "id": "b", "text": "string", "is_correct": false },
+        { "id": "a", "text": "string", "is_correct": false },
+        { "id": "b", "text": "string", "is_correct": true },
         { "id": "c", "text": "string", "is_correct": false },
         { "id": "d", "text": "string", "is_correct": false }
       ]
@@ -230,18 +240,25 @@ SCHEMA:
       userContentText += `Analyze the attached file/image visual content thoroughly and generate the quiz covering all details.\n`;
     }
 
+    userContentText += `\n[TARGET GENERATION LANGUAGE: ${langLabel}]\nCRITICAL: Regardless of whether the user instructions or extracted document above are written in English or any other language, you MUST TRANSLATE and generate every single question, all options, title, and description strictly in ${langLabel}.\n`;
+
     // Build parts for Gemini API
-    const parts: any[] = [{ text: systemPrompt }, { text: userContentText }];
+    const parts: any[] = [
+      { text: systemPrompt },
+      { text: userContentText },
+      { text: `FINAL MANDATORY DIRECTIVE: Output the entire quiz strictly in ${langLabel}. All question_text and all option texts MUST be in ${langLabel}.` }
+    ];
     if (inlineDataPart) {
       parts.push(inlineDataPart);
     }
 
-    // High-availability candidate models
+    // High-availability candidate models - prioritize fast, live models with instant fallbacks
     const CANDIDATE_MODELS = [
-      "gemini-3.8-flash",
-      "gemini-3.5-flash",
-      "gemini-3.5-flash-lite",
-      "gemini-flash-latest"
+      "gemini-flash-lite-latest",
+      "gemini-flash-latest",
+      "gemini-3.1-flash-lite",
+      "gemini-2.5-flash-lite",
+      "gemini-pro-latest",
     ];
 
     let rawText = "";
@@ -300,9 +317,23 @@ SCHEMA:
       }
     }
 
-    // Normalize and enforce options shapes & colors
+    // Normalize, randomly shuffle options, and enforce Kahoot shapes & colors
     const normalizedQuestions = (parsed.questions || []).map((q, idx) => {
-      const normalizedOptions = (q.options || []).slice(0, 4).map((opt, optIdx) => {
+      let rawOptions = (q.options || []).slice(0, 4);
+
+      // Ensure at least one correct option exists
+      if (!rawOptions.some((o) => o.is_correct) && rawOptions.length > 0) {
+        const randIdx = Math.floor(Math.random() * rawOptions.length);
+        rawOptions[randIdx].is_correct = true;
+      }
+
+      // Fisher-Yates shuffle the 4 options so the correct answer is randomized across positions
+      for (let i = rawOptions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [rawOptions[i], rawOptions[j]] = [rawOptions[j], rawOptions[i]];
+      }
+
+      const normalizedOptions = rawOptions.map((opt, optIdx) => {
         const shapeMeta = SHAPE_CONFIG[optIdx] || SHAPE_CONFIG[0];
         return {
           id: shapeMeta.id,
@@ -312,11 +343,6 @@ SCHEMA:
           shape: shapeMeta.shape,
         };
       });
-
-      // Ensure at least one correct option
-      if (!normalizedOptions.some((o) => o.is_correct) && normalizedOptions.length > 0) {
-        normalizedOptions[0].is_correct = true;
-      }
 
       return {
         question_text: q.question_text || `Question ${idx + 1}`,
@@ -332,6 +358,7 @@ SCHEMA:
       title: parsed.title || "AI Generated Challenge",
       description: parsed.description || "Created with Quizemia AI.",
       category: parsed.category || "General",
+      language: language,
       questions: normalizedQuestions,
     });
   } catch (error: any) {

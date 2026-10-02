@@ -18,13 +18,14 @@ import {
   X,
   Zap,
   Globe,
+  User as UserIcon,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Quiz } from "@/types/quiz";
-import { fetchPublicQuizzes } from "@/lib/supabase/queries";
+import { fetchPublicQuizzes, DEFAULT_PUBLIC_QUIZZES } from "@/lib/supabase/queries";
 import { HeroBackgroundAnimation } from "@/components/HeroBackgroundAnimation";
 import { HeroQuizCard } from "@/components/HeroQuizCard";
 import { useLanguage } from "@/context/LanguageContext";
@@ -423,6 +424,19 @@ export default function Dashboard() {
             {filteredQuizzes.map((quiz) => {
               const questionCount = quiz.questions?.length || 3;
               const quizLang = quiz.language || "en";
+
+              const isOfficial =
+                quiz.creator_email === "Quizemia Official" ||
+                DEFAULT_PUBLIC_QUIZZES.some((d) => d.id === quiz.id);
+
+              let authorNickname = quiz.creator_email?.trim() || "";
+              if (authorNickname.includes("@")) {
+                authorNickname = authorNickname.split("@")[0];
+              }
+              if (!authorNickname || authorNickname.toLowerCase() === "null") {
+                authorNickname = "Creator";
+              }
+
               return (
                 <motion.div
                   key={quiz.id}
@@ -442,6 +456,9 @@ export default function Dashboard() {
                             src={quiz.cover_image}
                             alt={quiz.title}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            onError={(e) => {
+                              (e.target as HTMLElement).style.display = "none";
+                            }}
                           />
                         ) : (
                           <div className="flex h-full items-center justify-center text-white/40">
@@ -464,10 +481,17 @@ export default function Dashboard() {
                           >
                             {quizLang === "al" ? "🇦🇱 Shqip" : quizLang === "mk" ? "🇲🇰 MK" : "🇬🇧 EN"}
                           </span>
-                          <div className="bg-zinc-900/80 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
-                            <Sparkles className="h-3 w-3 text-amber-300 fill-amber-300" />
-                            <span>Official</span>
-                          </div>
+                          {isOfficial ? (
+                            <div className="bg-zinc-900/80 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+                              <Sparkles className="h-3 w-3 text-amber-300 fill-amber-300" />
+                              <span>Official</span>
+                            </div>
+                          ) : (
+                            <div className="bg-blue-950/80 backdrop-blur-md text-blue-200 border border-blue-500/30 text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-sm max-w-[130px] truncate">
+                              <UserIcon className="h-3 w-3 text-blue-400 shrink-0" />
+                              <span className="truncate">@{authorNickname}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -495,9 +519,18 @@ export default function Dashboard() {
                     </div>
 
                     <CardFooter className="p-5 pt-0 border-t border-zinc-100 dark:border-zinc-800/80 mt-4 flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-600 dark:text-zinc-300">
-                        <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                        <span>Platform Default</span>
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-600 dark:text-zinc-300 max-w-[170px] truncate">
+                        {isOfficial ? (
+                          <>
+                            <span className="h-2 w-2 rounded-full bg-amber-500 shrink-0" />
+                            <span>{language === "al" ? "Zyrtare nga Quizemia" : "Platform Official"}</span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
+                            <span className="truncate">{language === "al" ? `Nga: @${authorNickname}` : `By: @${authorNickname}`}</span>
+                          </>
+                        )}
                       </div>
                       <Button
                         size="sm"

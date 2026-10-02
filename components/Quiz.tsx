@@ -29,8 +29,11 @@ import {
   FileText,
   X,
   Eye,
+  EyeOff,
   Edit3,
   Check,
+  Shuffle,
+  User as UserIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -79,20 +82,27 @@ export default function Quiz() {
   const [creationTab, setCreationTab] = useState<"ai" | "manual">(
     tabParam === "manual" ? "manual" : "ai"
   );
+  // Whether to show editable questions below AI showcase
+  const [showEditQuestions, setShowEditQuestions] = useState<boolean>(false);
 
-  // Quiz Language for generation and tagging (en, al, mk)
-  const [quizLanguage, setQuizLanguage] = useState<QuizLanguage>(language === "al" ? "al" : "en");
+  // Quiz Language for generation and tagging (en, al, mk) - strictly independent from UI header language switcher
+  const [quizLanguage, setQuizLanguageState] = useState<QuizLanguage>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("quizemia_creator_language");
+      if (saved === "al" || saved === "mk" || saved === "en") return saved;
+    }
+    return language === "al" ? "al" : "en";
+  });
+
+  const setQuizLanguage = (newLang: QuizLanguage) => {
+    setQuizLanguageState(newLang);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("quizemia_creator_language", newLang);
+    }
+  };
+
   const [questionCountMode, setQuestionCountMode] = useState<string>("auto");
   const [lobbyLanguageFilter, setLobbyLanguageFilter] = useState<"all" | QuizLanguage>("all");
-
-  useEffect(() => {
-    // If user changes language to Albanian, set default quiz creation language to Albanian
-    if (language === "al") {
-      setQuizLanguage("al");
-    } else {
-      setQuizLanguage("en");
-    }
-  }, [language]);
 
   useEffect(() => {
     if (modeParam === "create") {
@@ -119,6 +129,7 @@ export default function Quiz() {
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
   const [isAnswerRevealed, setIsAnswerRevealed] = useState(false);
+  const [lastAnswerResult, setLastAnswerResult] = useState<{ correct: boolean; points?: number } | null>(null);
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
   const [timeLeft, setTimeLeft] = useState(20);
@@ -189,14 +200,49 @@ export default function Quiz() {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
-    setActiveQuiz(quiz);
+
+    const SHAPE_CONFIG = [
+      { id: "a", color: "red", shape: "triangle" },
+      { id: "b", color: "blue", shape: "diamond" },
+      { id: "c", color: "yellow", shape: "circle" },
+      { id: "d", color: "green", shape: "square" },
+    ] as const;
+
+    // Dynamically shuffle options for every question so answers are randomized across the 4 buttons
+    const randomizedQuestions = (quiz.questions || []).map((q) => {
+      if (!q.options || q.options.length <= 1) return q;
+      const shuffled = [...q.options];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      const remappedOptions = shuffled.map((opt, optIdx) => {
+        const shapeMeta = SHAPE_CONFIG[optIdx] || SHAPE_CONFIG[0];
+        return {
+          ...opt,
+          id: shapeMeta.id,
+          color: shapeMeta.color,
+          shape: shapeMeta.shape,
+        };
+      });
+      return {
+        ...q,
+        options: remappedOptions,
+      };
+    });
+
+    setActiveQuiz({
+      ...quiz,
+      questions: randomizedQuestions,
+    });
     setCurrentQuestionIdx(0);
     setSelectedOptionId(null);
     setIsAnswerRevealed(false);
+    setLastAnswerResult(null);
     setScore(0);
     setStreak(0);
     setIsGameOver(false);
-    const initialTime = quiz.questions?.[0]?.time_limit || 20;
+    const initialTime = randomizedQuestions[0]?.time_limit || 20;
     setTimeLeft(initialTime);
   };
 
@@ -299,16 +345,18 @@ export default function Quiz() {
 
     setIsAnswerRevealed(true);
     setStreak(0);
+    setLastAnswerResult({ correct: false });
     toast({
-      title: "Time's Up!",
-      description: "Moving to next question...",
+      title: language === "al" ? "Koha Mbaroi! ⏱" : "Time's Up! ⏱",
+      description: language === "al" ? "Po kalohet te pyetja tjetër..." : "Moving to next question...",
       type: "error",
+      duration: 1700,
     });
 
-    // Automatically advance to the next question after 2.2 seconds
+    // Automatically advance to the next question after 2.0 seconds
     autoAdvanceTimeoutRef.current = setTimeout(() => {
       handleNextQuestionRef.current();
-    }, 2200);
+    }, 2000);
   };
 
   const handleSelectOption = (option: QuestionOption) => {
@@ -335,27 +383,33 @@ export default function Quiz() {
 
         setScore((prev) => prev + pointsEarned);
         setStreak((prev) => prev + 1);
+        setLastAnswerResult({ correct: true, points: pointsEarned });
 
         toast({
-          title: "Correct Answer! 🎉",
-          description: `+${pointsEarned} points awarded (Speed Bonus included)`,
+          title: language === "al" ? "Saktë! 🎉" : "Correct! 🎉",
+          description: `+${pointsEarned} pts (Speed Bonus)`,
           type: "success",
+          duration: 1700,
         });
       } else {
-        // Guests do NOT get points for answers or completion
+        // Guests do NOT get permanent rank points
         setStreak((prev) => prev + 1);
+        setLastAnswerResult({ correct: true });
         toast({
-          title: "Correct Answer! 🎉",
-          description: "Sign in to earn points and climb the rankings!",
+          title: language === "al" ? "Saktë! 🎉" : "Correct! 🎉",
+          description: language === "al" ? "Hyni për të ruajtur pikët!" : "Sign in to earn points!",
           type: "success",
+          duration: 1700,
         });
       }
     } else {
       setStreak(0);
+      setLastAnswerResult({ correct: false });
       toast({
-        title: "Incorrect",
-        description: "Better luck on the next question!",
+        title: language === "al" ? "E Pasaktë! ❌" : "Incorrect! ❌",
+        description: language === "al" ? "Vazhdo me pyetjen tjetër!" : "Better luck on the next question!",
         type: "error",
+        duration: 1700,
       });
     }
 
@@ -382,6 +436,7 @@ export default function Quiz() {
       setCurrentQuestionIdx(nextIdx);
       setSelectedOptionId(null);
       setIsAnswerRevealed(false);
+      setLastAnswerResult(null);
       setTimeLeft(activeQuiz.questions[nextIdx]?.time_limit || 20);
     } else {
       // Game Over
@@ -420,6 +475,7 @@ export default function Quiz() {
 
     setIsAiGenerating(true);
     setAiGeneratedSuccess(false);
+    setShowEditQuestions(false);
 
     try {
       const formData = new FormData();
@@ -452,6 +508,7 @@ export default function Quiz() {
 
       // Show the generated quiz showcase section with question count, Play button, and View/Edit questions button
       setAiGeneratedSuccess(true);
+      setShowEditQuestions(false);
 
       const langLabel = quizLanguage === "al" ? "Shqip" : quizLanguage === "mk" ? "Македонски" : "English";
       const qCount = data.questions?.length || 0;
@@ -538,6 +595,12 @@ export default function Quiz() {
     setIsSavingQuiz(true);
     setIsPublic(publishChoice);
 
+    const creatorNickname =
+      user?.user_metadata?.nickname ||
+      user?.user_metadata?.name ||
+      user?.user_metadata?.display_name ||
+      (user?.email ? user.email.split("@")[0] : "Quizemia Creator");
+
     const result = await createQuizWithQuestions(
       {
         title: quizTitle.trim(),
@@ -550,7 +613,7 @@ export default function Quiz() {
         questions: questionsList,
       },
       user?.id,
-      user?.user_metadata?.nickname || user?.user_metadata?.name || user?.email
+      creatorNickname
     );
 
     setIsSavingQuiz(false);
@@ -786,13 +849,37 @@ export default function Quiz() {
                   {/* Right: Next button or Points */}
                   <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                     {isAnswerRevealed ? (
-                      <Button
-                        size="sm"
-                        onClick={handleNextQuestion}
-                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-xs sm:text-sm px-2.5 sm:px-4 py-1 sm:py-1.5 h-7 sm:h-8 rounded-lg sm:rounded-xl shadow-md shadow-blue-500/25 animate-pulse cursor-pointer shrink-0"
-                      >
-                        <span>{currentQuestionIdx + 1 === totalQuestions ? "Podium 🏆" : "Next →"}</span>
-                      </Button>
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        {lastAnswerResult && (
+                          <span
+                            className={cn(
+                              "px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg text-[11px] sm:text-xs font-black flex items-center gap-1 border animate-in zoom-in-90 duration-150 shrink-0",
+                              lastAnswerResult.correct
+                                ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/40"
+                                : "bg-red-500/20 text-red-600 dark:text-red-400 border-red-500/40"
+                            )}
+                          >
+                            {lastAnswerResult.correct ? (
+                              <>
+                                <CheckCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                                <span>{lastAnswerResult.points ? `+${lastAnswerResult.points}` : (language === "al" ? "Saktë" : "Correct")}</span>
+                              </>
+                            ) : (
+                              <>
+                                <XCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                                <span>{language === "al" ? "Pasaktë" : "Wrong"}</span>
+                              </>
+                            )}
+                          </span>
+                        )}
+                        <Button
+                          size="sm"
+                          onClick={handleNextQuestion}
+                          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-xs sm:text-sm px-2.5 sm:px-4 py-1 sm:py-1.5 h-7 sm:h-8 rounded-lg sm:rounded-xl shadow-md shadow-blue-500/25 animate-pulse cursor-pointer shrink-0"
+                        >
+                          <span>{currentQuestionIdx + 1 === totalQuestions ? "Podium 🏆" : "Next →"}</span>
+                        </Button>
+                      </div>
                     ) : (
                       <>
                         <div className="flex items-center gap-1 text-xs font-bold text-amber-600 bg-amber-50 dark:bg-amber-950/40 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-amber-200 dark:border-amber-900 shrink-0">
@@ -980,7 +1067,7 @@ export default function Quiz() {
                         : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
                         }`}
                     >
-                      🌟 {t.dashboard.filterOfficial} ({availableQuizzes.filter((q) => q.creator_email === "Quizemia Official" || !q.user_id || DEFAULT_PUBLIC_QUIZZES.some((d) => d.id === q.id)).length})
+                      🌟 {t.dashboard.filterOfficial} ({availableQuizzes.filter((q) => q.creator_email === "Quizemia Official" || DEFAULT_PUBLIC_QUIZZES.some((d) => d.id === q.id)).length})
                     </button>
                     <button
                       type="button"
@@ -990,7 +1077,7 @@ export default function Quiz() {
                         : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
                         }`}
                     >
-                      👥 {t.dashboard.filterCommunity} ({availableQuizzes.filter((q) => q.creator_email !== "Quizemia Official" && q.user_id && !DEFAULT_PUBLIC_QUIZZES.some((d) => d.id === q.id)).length})
+                      👥 {t.dashboard.filterCommunity} ({availableQuizzes.filter((q) => q.creator_email !== "Quizemia Official" && !DEFAULT_PUBLIC_QUIZZES.some((d) => d.id === q.id)).length})
                     </button>
                   </div>
 
@@ -1076,7 +1163,6 @@ export default function Quiz() {
                 const filtered = availableQuizzes.filter((quiz) => {
                   const isDefault =
                     quiz.creator_email === "Quizemia Official" ||
-                    !quiz.user_id ||
                     DEFAULT_PUBLIC_QUIZZES.some((d) => d.id === quiz.id);
 
                   if (lobbyFilter === "default" && !isDefault) return false;
@@ -1121,10 +1207,17 @@ export default function Quiz() {
                     {filtered.map((quiz) => {
                       const isDefault =
                         quiz.creator_email === "Quizemia Official" ||
-                        !quiz.user_id ||
                         DEFAULT_PUBLIC_QUIZZES.some((d) => d.id === quiz.id);
                       const qCount = quiz.questions?.length || 3;
                       const quizLang = quiz.language || "en";
+
+                      let authorNickname = quiz.creator_email?.trim() || "";
+                      if (authorNickname.includes("@")) {
+                        authorNickname = authorNickname.split("@")[0];
+                      }
+                      if (!authorNickname || authorNickname.toLowerCase() === "null") {
+                        authorNickname = "Creator";
+                      }
 
                       return (
                         <Card
@@ -1138,6 +1231,9 @@ export default function Quiz() {
                                   src={quiz.cover_image}
                                   alt={quiz.title}
                                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                  onError={(e) => {
+                                    (e.target as HTMLElement).style.display = "none";
+                                  }}
                                 />
                               ) : (
                                 <div className="flex h-full items-center justify-center text-white/40">
@@ -1162,12 +1258,13 @@ export default function Quiz() {
                                 </span>
                                 {isDefault ? (
                                   <Badge className="bg-zinc-900/80 dark:bg-black/80 backdrop-blur-sm text-white border-0 text-[10px] font-bold gap-1 shadow-sm">
-
+                                    <Sparkles className="h-3 w-3 text-amber-300 fill-amber-300" />
                                     <span>Official</span>
                                   </Badge>
                                 ) : (
-                                  <Badge variant="secondary" className="text-[10px] font-bold">
-                                    Community
+                                  <Badge className="bg-blue-950/80 dark:bg-blue-900/80 backdrop-blur-sm text-blue-200 border border-blue-500/30 text-[10px] font-bold gap-1 shadow-sm max-w-[130px] truncate">
+                                    <UserIcon className="h-3 w-3 text-blue-400 shrink-0" />
+                                    <span className="truncate">@{authorNickname}</span>
                                   </Badge>
                                 )}
                               </div>
@@ -1183,15 +1280,24 @@ export default function Quiz() {
                             </CardHeader>
 
                             <CardContent className="p-4 pt-1">
-                              <div className="flex items-center gap-3 text-xs font-semibold text-zinc-400">
-                                <span className="flex items-center gap-1">
-                                  <HelpCircle className="h-3.5 w-3.5 text-blue-500" />
-                                  {qCount} {t.dashboard.questionsCount}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <Clock className="h-3.5 w-3.5 text-amber-500" />
-                                  ~{qCount * 20}s
-                                </span>
+                              <div className="flex items-center justify-between text-xs font-semibold text-zinc-400">
+                                <div className="flex items-center gap-3">
+                                  <span className="flex items-center gap-1">
+                                    <HelpCircle className="h-3.5 w-3.5 text-blue-500" />
+                                    {qCount} {t.dashboard.questionsCount}
+                                  </span>
+                                  <span className="flex items-center gap-1">
+                                    <Clock className="h-3.5 w-3.5 text-amber-500" />
+                                    ~{qCount * 20}s
+                                  </span>
+                                </div>
+                                <div className="text-[11px] font-medium truncate max-w-[120px]">
+                                  {isDefault ? (
+                                    <span className="text-amber-600 dark:text-amber-400 font-bold">Quizemia</span>
+                                  ) : (
+                                    <span className="text-blue-600 dark:text-blue-400 font-bold truncate">@{authorNickname}</span>
+                                  )}
+                                </div>
                               </div>
                             </CardContent>
                           </div>
@@ -1364,15 +1470,38 @@ export default function Quiz() {
                       {/* View / Edit Questions Button */}
                       <Button
                         type="button"
-                        variant="outline"
+                        variant={showEditQuestions ? "default" : "outline"}
                         onClick={() => {
-                          setCreationTab("manual");
+                          setShowEditQuestions((prev) => {
+                            const next = !prev;
+                            if (next) {
+                              setTimeout(() => {
+                                document.getElementById("quiz-questions-editor")?.scrollIntoView({ behavior: "smooth" });
+                              }, 120);
+                            }
+                            return next;
+                          });
                         }}
-                        className="border-2 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-800 dark:text-zinc-200 font-bold text-sm py-6 rounded-2xl shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+                        className={cn(
+                          "border-2 font-bold text-sm py-6 rounded-2xl shadow-sm flex items-center justify-center gap-2 cursor-pointer transition-all",
+                          showEditQuestions
+                            ? "border-amber-500 bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/25"
+                            : "border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-800 dark:text-zinc-200"
+                        )}
                       >
-                        <Edit3 className="h-4 w-4 text-amber-500" />
-                        <span>{language === "al" ? "Shiko / Modifiko Pyetjet" : "View / Edit Questions"}</span>
-                        <Badge variant="secondary" className="ml-1 text-xs font-black">
+                        <Edit3 className="h-4 w-4" />
+                        <span>
+                          {showEditQuestions
+                            ? (language === "al" ? "Fshih Redaktimin" : "Hide Questions")
+                            : (language === "al" ? "Shiko / Modifiko Pyetjet" : "View / Edit Questions")}
+                        </span>
+                        <Badge
+                          variant={showEditQuestions ? "outline" : "secondary"}
+                          className={cn(
+                            "ml-1 text-xs font-black",
+                            showEditQuestions ? "bg-white/20 text-white border-white/40" : ""
+                          )}
+                        >
                           {questionsList.length}
                         </Badge>
                       </Button>
@@ -1429,12 +1558,74 @@ export default function Quiz() {
                       </div>
                     </details>
 
+                    {/* Dedicated Edit Questions Toggle Prompt below Quick glance */}
+                    <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-orange-500/5 to-transparent dark:from-amber-950/30 dark:via-zinc-800/40 dark:to-transparent border border-amber-300/60 dark:border-amber-900/50 flex flex-col sm:flex-row items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <div className="h-10 w-10 rounded-xl bg-amber-500/20 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                          <Edit3 className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <p className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                            {language === "al"
+                              ? "Dëshironi të ndryshoni ose shtoni pyetje?"
+                              : "Want to edit, modify, or add questions?"}
+                          </p>
+                          <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                            {language === "al"
+                              ? (showEditQuestions
+                                  ? "Redaktuesi i pyetjeve është i hapur më poshtë."
+                                  : "Kliko këtu për të hapur listën e plotë të pyetjeve dhe për t'i redaktuar.")
+                              : (showEditQuestions
+                                  ? "Question editor is active and shown below."
+                                  : "Click here to reveal and edit each question, choices, and timer.")}
+                          </p>
+                        </div>
+                      </div>
+
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          setShowEditQuestions((prev) => {
+                            const next = !prev;
+                            if (next) {
+                              setTimeout(() => {
+                                document.getElementById("quiz-questions-editor")?.scrollIntoView({ behavior: "smooth" });
+                              }, 120);
+                            }
+                            return next;
+                          });
+                        }}
+                        className={cn(
+                          "w-full sm:w-auto font-bold text-xs py-2.5 px-4 rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0",
+                          showEditQuestions
+                            ? "bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-300"
+                            : "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-amber-500/25"
+                        )}
+                      >
+                        {showEditQuestions ? (
+                          <>
+                            <EyeOff className="h-3.5 w-3.5" />
+                            <span>{language === "al" ? "Fshih Redaktimin e Pyetjeve" : "Hide Question Editor"}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Edit3 className="h-3.5 w-3.5" />
+                            <span>{language === "al" ? "Modifiko Pyetjet me Detaje" : "Edit the Questions"}</span>
+                            <span className="text-[10px] bg-black/20 dark:bg-white/20 px-1.5 py-0.5 rounded-md font-mono">
+                              {questionsList.length}
+                            </span>
+                          </>
+                        )}
+                      </Button>
+                    </div>
+
                     {/* Reset / Generate Another */}
                     <div className="pt-2 flex items-center justify-between border-t border-amber-200/50 dark:border-zinc-800 text-xs">
                       <button
                         type="button"
                         onClick={() => {
                           setAiGeneratedSuccess(false);
+                          setShowEditQuestions(false);
                         }}
                         className="font-bold text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1.5 cursor-pointer"
                       >
@@ -1446,6 +1637,7 @@ export default function Quiz() {
                         type="button"
                         onClick={() => {
                           setCreationTab("manual");
+                          setShowEditQuestions(true);
                         }}
                         className="font-bold text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 hover:underline flex items-center gap-1 cursor-pointer"
                       >
@@ -1842,170 +2034,251 @@ export default function Quiz() {
             </TabsContent>
           </Tabs>
 
-          {/* Question Review & Save Section */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
-                {language === "al" ? "Pyetjet e Kuizit" : "Quiz Questions"} ({questionsList.length})
-              </h3>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setQuestionsList([
-                    ...questionsList,
-                    {
-                      question_text: language === "al" ? `Pyetje e re ${questionsList.length + 1}` : `New Question ${questionsList.length + 1}`,
-                      time_limit: 20,
-                      points: 1000,
-                      order_index: questionsList.length,
-                      options: [
-                        { id: "a", text: language === "al" ? "Përgjigjja 1" : "Answer 1", is_correct: true, color: "red", shape: "triangle" },
-                        { id: "b", text: language === "al" ? "Përgjigjja 2" : "Answer 2", is_correct: false, color: "blue", shape: "diamond" },
-                        { id: "c", text: language === "al" ? "Përgjigjja 3" : "Answer 3", is_correct: false, color: "yellow", shape: "circle" },
-                        { id: "d", text: language === "al" ? "Përgjigjja 4" : "Answer 4", is_correct: false, color: "green", shape: "square" },
-                      ],
-                    },
-                  ])
-                }
-                className="gap-1.5"
-              >
-                <PlusCircle className="h-4 w-4" />
-                <span>{language === "al" ? "Shto Pyetje" : "Add Question"}</span>
-              </Button>
-            </div>
+          {/* Question Review & Save Section (Optional in AI mode, toggleable via Edit buttons) */}
+          {(creationTab === "manual" || showEditQuestions) && (
+            <motion.div
+              id="quiz-questions-editor"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25 }}
+              className="space-y-4 pt-4 border-t border-zinc-200 dark:border-zinc-800 scroll-mt-24"
+            >
+              <div className="flex items-center justify-between p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 shadow-sm">
+                <div>
+                  <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                    <span>{language === "al" ? "Pyetjet e Kuizit" : "Quiz Questions"}</span>
+                    <Badge variant="secondary" className="font-mono text-xs">
+                      {questionsList.length}
+                    </Badge>
+                  </h3>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                    {language === "al"
+                      ? "Mund të modifikoni pyetjet, alternativat, kohën, ose të shtoni pyetje të reja."
+                      : "Customize questions, choices, timer, or add new questions."}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {creationTab === "ai" && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowEditQuestions(false)}
+                      className="text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 gap-1.5 cursor-pointer"
+                    >
+                      <EyeOff className="h-3.5 w-3.5" />
+                      <span>{language === "al" ? "Fshih Redaktimin" : "Hide Editor"}</span>
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const randCorrectIdx = Math.floor(Math.random() * 4);
+                      setQuestionsList([
+                        ...questionsList,
+                        {
+                          question_text: language === "al" ? `Pyetje e re ${questionsList.length + 1}` : `New Question ${questionsList.length + 1}`,
+                          time_limit: 20,
+                          points: 1000,
+                          order_index: questionsList.length,
+                          options: [
+                            { id: "a", text: language === "al" ? "Përgjigjja 1" : "Answer 1", is_correct: randCorrectIdx === 0, color: "red", shape: "triangle" },
+                            { id: "b", text: language === "al" ? "Përgjigjja 2" : "Answer 2", is_correct: randCorrectIdx === 1, color: "blue", shape: "diamond" },
+                            { id: "c", text: language === "al" ? "Përgjigjja 3" : "Answer 3", is_correct: randCorrectIdx === 2, color: "yellow", shape: "circle" },
+                            { id: "d", text: language === "al" ? "Përgjigjja 4" : "Answer 4", is_correct: randCorrectIdx === 3, color: "green", shape: "square" },
+                          ],
+                        },
+                      ]);
+                    }}
+                    className="gap-1.5 cursor-pointer"
+                  >
+                    <PlusCircle className="h-4 w-4" />
+                    <span>{language === "al" ? "Shto Pyetje" : "Add Question"}</span>
+                  </Button>
+                </div>
+              </div>
 
-            {questionsList.map((q, qIndex) => (
-              <Card key={qIndex} className="p-5 border-zinc-200 dark:border-zinc-800">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
-                    {language === "al" ? "Pyetja" : "Question"} #{qIndex + 1}
-                  </span>
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs font-semibold text-zinc-500">
-                      {language === "al" ? "Koha" : "Time"}: {q.time_limit}s
+              {questionsList.map((q, qIndex) => (
+                <Card key={qIndex} className="p-5 border-zinc-200 dark:border-zinc-800">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
+                      {language === "al" ? "Pyetja" : "Question"} #{qIndex + 1}
                     </span>
-                    {questionsList.length > 1 && (
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <span className="text-xs font-semibold text-zinc-500">
+                        {language === "al" ? "Koha" : "Time"}: {q.time_limit}s
+                      </span>
                       <button
                         type="button"
                         onClick={() => {
-                          setQuestionsList(questionsList.filter((_, idx) => idx !== qIndex));
-                        }}
-                        className="text-zinc-400 hover:text-red-500 transition-colors p-1"
-                        title={language === "al" ? "Fshij këtë pyetje" : "Delete this question"}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                <Input
-                  type="text"
-                  placeholder={language === "al" ? "Shkruani tekstin e pyetjes..." : "Enter question text..."}
-                  value={q.question_text}
-                  onChange={(e) => {
-                    const updated = [...questionsList];
-                    updated[qIndex].question_text = e.target.value;
-                    setQuestionsList(updated);
-                  }}
-                  className="font-bold text-base mb-4"
-                />
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {q.options.map((opt, optIndex) => (
-                    <div
-                      key={opt.id}
-                      className={`flex items-center gap-2 p-3 rounded-xl border ${opt.is_correct
-                        ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20"
-                        : "border-zinc-200 dark:border-zinc-800"
-                        }`}
-                    >
-                      <input
-                        type="radio"
-                        name={`correct-${qIndex}`}
-                        checked={opt.is_correct}
-                        onChange={() => {
                           const updated = [...questionsList];
-                          updated[qIndex].options = updated[qIndex].options.map((o) => ({
-                            ...o,
-                            is_correct: o.id === opt.id,
+                          const rawOpts = [...updated[qIndex].options];
+                          for (let i = rawOpts.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [rawOpts[i], rawOpts[j]] = [rawOpts[j], rawOpts[i]];
+                          }
+                          const SHAPE_CONFIG = [
+                            { id: "a", color: "red", shape: "triangle" },
+                            { id: "b", color: "blue", shape: "diamond" },
+                            { id: "c", color: "yellow", shape: "circle" },
+                            { id: "d", color: "green", shape: "square" },
+                          ] as const;
+                          updated[qIndex].options = rawOpts.map((opt, oIdx) => ({
+                            ...opt,
+                            id: SHAPE_CONFIG[oIdx].id,
+                            color: SHAPE_CONFIG[oIdx].color,
+                            shape: SHAPE_CONFIG[oIdx].shape,
                           }));
                           setQuestionsList(updated);
+                          toast({
+                            title: language === "al" ? "Opsionet u Përzien! 🔀" : "Answers Shuffled! 🔀",
+                            description: language === "al" ? "Pozicionet e përgjigjeve u ndërruan rastësisht." : "Option positions randomized.",
+                            type: "info",
+                            duration: 1500,
+                          });
                         }}
-                        className="h-4 w-4 accent-emerald-600 cursor-pointer"
-                        title={language === "al" ? "Shënoje si përgjigje të saktë" : "Mark as correct answer"}
-                      />
-                      <Input
-                        type="text"
-                        placeholder={language === "al" ? `Opsioni ${opt.id.toUpperCase()}` : `Option ${opt.id.toUpperCase()}`}
-                        value={opt.text}
-                        onChange={(e) => {
-                          const updated = [...questionsList];
-                          updated[qIndex].options[optIndex].text = e.target.value;
-                          setQuestionsList(updated);
-                        }}
-                        className="h-9 text-xs sm:text-sm"
-                      />
-                      <span className="text-xs font-bold text-zinc-400 uppercase w-6 text-center">
-                        {opt.id}
-                      </span>
+                        className="text-zinc-400 hover:text-amber-500 transition-colors p-1 flex items-center gap-1 text-[11px] font-semibold cursor-pointer"
+                        title={language === "al" ? "Përziej renditjen e opsioneve" : "Shuffle option positions"}
+                      >
+                        <Shuffle className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">{language === "al" ? "Përziej" : "Shuffle"}</span>
+                      </button>
+                      {questionsList.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setQuestionsList(questionsList.filter((_, idx) => idx !== qIndex));
+                          }}
+                          className="text-zinc-400 hover:text-red-500 transition-colors p-1 cursor-pointer"
+                          title={language === "al" ? "Fshij këtë pyetje" : "Delete this question"}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
                     </div>
-                  ))}
-                </div>
-              </Card>
-            ))}
+                  </div>
 
-            {/* Save & Play CTA */}
-            <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-zinc-200 dark:border-zinc-800 pt-6">
-              {!user ? (
-                <p className="text-xs text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1.5">
-                  <Info className="h-4 w-4 shrink-0" />
-                  <span>
-                    {language === "al" ? (
-                      <>
-                        Modaliteti Vizitor: Ky kuiz do të luhet në këtë sesion, por nuk do të ruhet pasi të dilni.{" "}
-                        <button
-                          type="button"
-                          onClick={() => openAuthModal("login")}
-                          className="underline font-bold hover:text-amber-700"
-                        >
-                          Hyni për ta ruajtur
-                        </button>
-                        .
-                      </>
-                    ) : (
-                      <>
-                        Guest Mode: This quiz will play in this session, but won&apos;t be saved after you leave.{" "}
-                        <button
-                          type="button"
-                          onClick={() => openAuthModal("login")}
-                          className="underline font-bold hover:text-amber-700"
-                        >
-                          Sign in to save it
-                        </button>
-                        .
-                      </>
-                    )}
-                  </span>
-                </p>
-              ) : (
-                <div />
-              )}
-              <Button
-                size="lg"
-                onClick={handleInitiateSave}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-2 px-8 shadow-lg active:scale-95 w-full sm:w-auto shrink-0 cursor-pointer"
-              >
-                <CheckCircle className="h-5 w-5" />
-                <span>
-                  {user
-                    ? (language === "al" ? "Ruaj & Luaj Kuizin" : "Save & Play Quiz")
-                    : (language === "al" ? "Luaj Kuizin (Vizitor)" : "Play Quiz (Guest)")}
-                </span>
-              </Button>
-            </div>
-          </div>
+                  <Input
+                    type="text"
+                    placeholder={language === "al" ? "Shkruani tekstin e pyetjes..." : "Enter question text..."}
+                    value={q.question_text}
+                    onChange={(e) => {
+                      const updated = [...questionsList];
+                      updated[qIndex].question_text = e.target.value;
+                      setQuestionsList(updated);
+                    }}
+                    className="font-bold text-base mb-4"
+                  />
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {q.options.map((opt, optIndex) => (
+                      <div
+                        key={opt.id}
+                        className={`flex items-center gap-2 p-3 rounded-xl border ${opt.is_correct
+                          ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20"
+                          : "border-zinc-200 dark:border-zinc-800"
+                          }`}
+                      >
+                        <input
+                          type="radio"
+                          name={`correct-${qIndex}`}
+                          checked={opt.is_correct}
+                          onChange={() => {
+                            const updated = [...questionsList];
+                            updated[qIndex].options = updated[qIndex].options.map((o) => ({
+                              ...o,
+                              is_correct: o.id === opt.id,
+                            }));
+                            setQuestionsList(updated);
+                          }}
+                          className="h-4 w-4 accent-emerald-600 cursor-pointer"
+                          title={language === "al" ? "Shënoje si përgjigje të saktë" : "Mark as correct answer"}
+                        />
+                        <Input
+                          type="text"
+                          placeholder={language === "al" ? `Opsioni ${opt.id.toUpperCase()}` : `Option ${opt.id.toUpperCase()}`}
+                          value={opt.text}
+                          onChange={(e) => {
+                            const updated = [...questionsList];
+                            updated[qIndex].options[optIndex].text = e.target.value;
+                            setQuestionsList(updated);
+                          }}
+                          className="h-9 text-xs sm:text-sm"
+                        />
+                        <span className="text-xs font-bold text-zinc-400 uppercase w-6 text-center">
+                          {opt.id}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              ))}
+
+              {/* Save & Play CTA */}
+              <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-zinc-200 dark:border-zinc-800 pt-6">
+                {!user ? (
+                  <p className="text-xs text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1.5">
+                    <Info className="h-4 w-4 shrink-0" />
+                    <span>
+                      {language === "al" ? (
+                        <>
+                          Modaliteti Vizitor: Ky kuiz do të luhet në këtë sesion, por nuk do të ruhet pasi të dilni.{" "}
+                          <button
+                            type="button"
+                            onClick={() => openAuthModal("login")}
+                            className="underline font-bold hover:text-amber-700"
+                          >
+                            Hyni për ta ruajtur
+                          </button>
+                          .
+                        </>
+                      ) : (
+                        <>
+                          Guest Mode: This quiz will play in this session, but won&apos;t be saved after you leave.{" "}
+                          <button
+                            type="button"
+                            onClick={() => openAuthModal("login")}
+                            className="underline font-bold hover:text-amber-700"
+                          >
+                            Sign in to save it
+                          </button>
+                          .
+                        </>
+                      )}
+                    </span>
+                  </p>
+                ) : (
+                  <div />
+                )}
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                  {creationTab === "ai" && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="lg"
+                      onClick={() => setShowEditQuestions(false)}
+                      className="cursor-pointer"
+                    >
+                      <span>{language === "al" ? "Mbyll Redaktimin" : "Close Editor"}</span>
+                    </Button>
+                  )}
+                  <Button
+                    size="lg"
+                    onClick={handleInitiateSave}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-2 px-8 shadow-lg active:scale-95 w-full sm:w-auto shrink-0 cursor-pointer"
+                  >
+                    <CheckCircle className="h-5 w-5" />
+                    <span>
+                      {user
+                        ? (language === "al" ? "Ruaj & Luaj Kuizin" : "Save & Play Quiz")
+                        : (language === "al" ? "Luaj Kuizin (Vizitor)" : "Play Quiz (Guest)")}
+                    </span>
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          )}
         </div>
       )}
 
@@ -2093,8 +2366,18 @@ export default function Quiz() {
                   </div>
                   <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1 leading-relaxed">
                     {language === "al"
-                      ? "Çdokush në Quizemia mund ta zbulojë, të sfidojë miqtë dhe ta luajë këtë kuiz në Arenën publike."
-                      : "Anyone on Quizemia can discover, challenge friends, and play this quiz in the public Arena."}
+                      ? `Çdokush në Quizemia mund ta zbulojë dhe luajë këtë kuiz në Arenën publike. Do të shfaqet me autorin tuaj: @${
+                          user?.user_metadata?.nickname ||
+                          user?.user_metadata?.name ||
+                          user?.user_metadata?.display_name ||
+                          (user?.email ? user.email.split("@")[0] : "Quizemia Creator")
+                        }.`
+                      : `Anyone on Quizemia can discover and play this quiz in the public Arena. It will be published under your nickname: @${
+                          user?.user_metadata?.nickname ||
+                          user?.user_metadata?.name ||
+                          user?.user_metadata?.display_name ||
+                          (user?.email ? user.email.split("@")[0] : "Quizemia Creator")
+                        }.`}
                   </p>
                 </div>
               </div>
