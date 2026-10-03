@@ -244,7 +244,6 @@ export default function Dashboard() {
                   size="default"
                   className="bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-zinc-950 font-black text-sm px-5 py-2.5 rounded-xl shadow-lg shadow-amber-500/25 border-b-2 border-amber-600 active:scale-95 transition-all gap-1.5 shrink-0"
                 >
-                  <Sparkles className="h-4 w-4" />
                   <span>{t.hero.generateButton}</span>
                 </Button>
               </form>
@@ -307,7 +306,6 @@ export default function Dashboard() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
           <div>
             <div className="flex items-center gap-2">
-              <Flame className="h-6 w-6 text-red-500 fill-red-500" />
               <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">
                 {t.dashboard.title}
               </h2>
@@ -378,7 +376,6 @@ export default function Dashboard() {
                     : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200"
                 )}
               >
-                <span>🇬🇧</span>
                 <span>{language === "al" ? "Anglisht" : "English"}</span>
               </button>
               <button
@@ -391,7 +388,6 @@ export default function Dashboard() {
                     : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200"
                 )}
               >
-                <span>🇦🇱</span>
                 <span>Shqip</span>
               </button>
               <button
@@ -404,7 +400,6 @@ export default function Dashboard() {
                     : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200"
                 )}
               >
-                <span>🇲🇰</span>
                 <span>Македонски</span>
               </button>
             </div>
@@ -491,9 +486,7 @@ export default function Dashboard() {
                             <Sparkles className="h-12 w-12" />
                           </div>
                         )}
-                        <div className="absolute top-3 left-3">
-                          <Badge variant="vibrant">{quiz.category || "General"}</Badge>
-                        </div>
+
                         <div className="absolute top-3 right-3 flex items-center gap-1.5">
                           <span
                             className={cn(
@@ -501,16 +494,15 @@ export default function Dashboard() {
                               quizLang === "al"
                                 ? "bg-red-600 text-white"
                                 : quizLang === "mk"
-                                ? "bg-amber-600 text-white"
-                                : "bg-blue-600 text-white"
+                                  ? "bg-amber-600 text-white"
+                                  : "bg-blue-600 text-white"
                             )}
                           >
-                            {quizLang === "al" ? "🇦🇱 Shqip" : quizLang === "mk" ? "🇲🇰 MK" : "🇬🇧 EN"}
+                            {quizLang === "al" ? "Shqip" : quizLang === "mk" ? "MK" : "EN"}
                           </span>
                           {isOfficial ? (
                             <div className="bg-zinc-900/80 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
-                              <Sparkles className="h-3 w-3 text-amber-300 fill-amber-300" />
-                              <span>{language === "al" ? "Zyrtar" : "Official"}</span>
+                              <span>{language === "al" ? "Nga Platforma" : "Default"}</span>
                             </div>
                           ) : (
                             <div className="bg-blue-950/80 backdrop-blur-md text-blue-200 border border-blue-500/30 text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-sm max-w-[130px] truncate">
@@ -545,19 +537,6 @@ export default function Dashboard() {
                     </div>
 
                     <CardFooter className="p-5 pt-0 border-t border-zinc-100 dark:border-zinc-800/80 mt-4 flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-600 dark:text-zinc-300 max-w-[170px] truncate">
-                        {isOfficial ? (
-                          <>
-                            <span className="h-2 w-2 rounded-full bg-amber-500 shrink-0" />
-                            <span>{language === "al" ? "Zyrtare nga Quizemia" : "Platform Official"}</span>
-                          </>
-                        ) : (
-                          <>
-                            <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
-                            <span className="truncate">{language === "al" ? `Nga: @${authorNickname}` : `By: @${authorNickname}`}</span>
-                          </>
-                        )}
-                      </div>
                       <Button
                         size="sm"
                         onClick={() => router.push(`/quiz?id=${quiz.id}`)}

@@ -271,7 +271,7 @@ export async function recordMatchResult(params: {
         questionCount: totalQuestions,
         bestStreak: updatedEntry.best_streak,
       }),
-    }).catch(() => {});
+    }).catch(() => { });
   } catch {
     // Non-blocking
   }
@@ -326,7 +326,7 @@ export async function recordQuizCreatedBonus(userId: string, nickname: string): 
         pointsToAdd: POINTS_CONFIG.CREATOR_BONUS,
         quizCreated: true,
       }),
-    }).catch(() => {});
+    }).catch(() => { });
   } catch {
     // Non-blocking
   }

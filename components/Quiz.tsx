@@ -82,9 +82,9 @@ export default function Quiz() {
   const modeParam = searchParams.get("mode");
   const tabParam = searchParams.get("tab");
 
-  // Mode: "play" or "create"
-  const [mode, setMode] = useState<"play" | "create">(
-    modeParam === "create" ? "create" : "play"
+  // Mode: "play" | "create" | "host"
+  const [mode, setMode] = useState<"play" | "create" | "host">(
+    modeParam === "create" ? "create" : modeParam === "host" ? "host" : "play"
   );
   // Creation Tab: "ai" or "manual"
   const [creationTab, setCreationTab] = useState<"ai" | "manual">(
@@ -688,7 +688,7 @@ export default function Quiz() {
     setIsPublishDialogOpen(true);
   };
 
-  const handleConfirmSave = async (publishChoice: boolean) => {
+  const handleConfirmSave = async (publishChoice: boolean, shouldHostLive: boolean = false) => {
     setIsSavingQuiz(true);
 
     const creatorNickname =
@@ -724,11 +724,11 @@ export default function Quiz() {
             : (language === "al" ? "Kuizi Privat u Ruajt! +200 Pikë 🏆" : "Private Quiz Saved! +200 Points 🏆"),
           description: publishChoice
             ? (language === "al"
-                ? `"${result.quiz.title}" u publikua! Fitove +200 pikë krijuesi në renditje!`
-                : `"${result.quiz.title}" is published! You earned +200 creator points on the leaderboard!`)
+              ? `"${result.quiz.title}" u publikua! Fitove +200 pikë krijuesi në renditje!`
+              : `"${result.quiz.title}" is published! You earned +200 creator points on the leaderboard!`)
             : (language === "al"
-                ? `"${result.quiz.title}" u ruajt! Fitove +200 pikë krijuesi në renditje!`
-                : `"${result.quiz.title}" is saved! You earned +200 creator points on the leaderboard!`),
+              ? `"${result.quiz.title}" u ruajt! Fitove +200 pikë krijuesi në renditje!`
+              : `"${result.quiz.title}" is saved! You earned +200 creator points on the leaderboard!`),
           type: "success",
         });
         setAvailableQuizzes((prev) => [result.quiz!, ...prev]);
@@ -741,8 +741,13 @@ export default function Quiz() {
           type: "info",
         });
       }
-      startQuiz(result.quiz);
-      setMode("play");
+
+      if (shouldHostLive) {
+        router.push(`/live/host?quizId=${result.quiz.id}`);
+      } else {
+        startQuiz(result.quiz);
+        setMode("play");
+      }
     } else {
       toast({
         title: language === "al" ? "Ruajtja Dështoi" : "Save Failed",
@@ -770,18 +775,15 @@ export default function Quiz() {
       {/* Top Segmented Mode Bar - hidden while in live gameplay so screen isn't wasted */}
       {!isPlayingActiveQuiz && (
         <div className="flex items-center justify-between mb-8 bg-zinc-100 dark:bg-zinc-900 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-800">
-          <div className="flex items-center gap-1 w-full sm:w-auto">
+          <div className="flex items-center gap-1 w-full sm:w-auto flex-wrap">
             <button
               type="button"
-              onClick={() => {
-                setMode("play");
-              }}
+              onClick={() => setMode("play")}
               className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer ${mode === "play"
                 ? "bg-blue-600 text-white shadow-md shadow-blue-500/30"
                 : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
                 }`}
             >
-              <Play className="h-4 w-4 fill-current" />
               <span>{t.quiz.playArenaBtn}</span>
             </button>
 
@@ -793,8 +795,18 @@ export default function Quiz() {
                 : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
                 }`}
             >
-              <PlusCircle className="h-4 w-4" />
               <span>{t.quiz.createStudioBtn}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setMode("host")}
+              className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer ${mode === "host"
+                ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-md"
+                : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+                }`}
+            >
+              <span>{language === "al" ? "Krijo një Lojë Live" : "Host Live Game"}</span>
             </button>
           </div>
         </div>
@@ -1267,7 +1279,7 @@ export default function Quiz() {
                         : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
                         }`}
                     >
-                      🌟 {t.dashboard.filterOfficial} ({availableQuizzes.filter((q) => q.creator_email === "Quizemia Official" || DEFAULT_PUBLIC_QUIZZES.some((d) => d.id === q.id)).length})
+                      {t.dashboard.filterOfficial} ({availableQuizzes.filter((q) => q.creator_email === "Quizemia Official" || DEFAULT_PUBLIC_QUIZZES.some((d) => d.id === q.id)).length})
                     </button>
                     <button
                       type="button"
@@ -1502,14 +1514,20 @@ export default function Quiz() {
                             </CardContent>
                           </div>
 
-                          <CardFooter className="p-4 pt-0 border-t border-zinc-100 dark:border-zinc-800 mt-2">
+                          <CardFooter className="p-4 pt-0 border-t border-zinc-100 dark:border-zinc-800 mt-2 flex items-center gap-2">
                             <Button
                               onClick={() => startQuiz(quiz)}
-                              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-2 shadow-sm active:scale-95"
+                              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-sm active:scale-95"
                             >
-                              <Play className="h-4 w-4 fill-current" />
                               <span>{t.dashboard.playNow}</span>
                             </Button>
+                            <Button
+                              variant="outline"
+                              onClick={() => router.push(`/live/host?quizId=${quiz.id}`)}
+                              className="font-bold text-xs px-3 border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                              title={language === "al" ? "Krijo lojë live me PIN" : "Host live game with PIN"}
+                            >
+                              {language === "al" ? "Krijo Lojë" : "Host"}                            </Button>
                           </CardFooter>
                         </Card>
                       );
@@ -1773,11 +1791,11 @@ export default function Quiz() {
                           <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
                             {language === "al"
                               ? (showEditQuestions
-                                  ? "Redaktuesi i pyetjeve është i hapur më poshtë."
-                                  : "Kliko këtu për të hapur listën e plotë të pyetjeve dhe për t'i redaktuar.")
+                                ? "Redaktuesi i pyetjeve është i hapur më poshtë."
+                                : "Kliko këtu për të hapur listën e plotë të pyetjeve dhe për t'i redaktuar.")
                               : (showEditQuestions
-                                  ? "Question editor is active and shown below."
-                                  : "Click here to reveal and edit each question, choices, and timer.")}
+                                ? "Question editor is active and shown below."
+                                : "Click here to reveal and edit each question, choices, and timer.")}
                           </p>
                         </div>
                       </div>
@@ -2360,163 +2378,164 @@ export default function Quiz() {
                 const isCardFlagged = !qSafety.isSafe || hasOptionViolation;
 
                 return (
-                <Card
-                  key={qIndex}
-                  className={cn(
-                    "p-5 transition-colors border",
-                    isCardFlagged
-                      ? "border-red-500/60 bg-red-500/[0.03] dark:bg-red-950/[0.15]"
-                      : "border-zinc-200 dark:border-zinc-800"
-                  )}
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
-                        {language === "al" ? "Pyetja" : "Question"} #{qIndex + 1}
-                      </span>
-                      {isCardFlagged && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-red-100 dark:bg-red-950/70 text-red-600 dark:text-red-400 border border-red-300 dark:border-red-800">
-                          <AlertTriangle className="h-3 w-3 shrink-0" />
-                          <span>{language === "al" ? "Fjalë e ndaluar" : "Prohibited word"}</span>
+                  <Card
+                    key={qIndex}
+                    className={cn(
+                      "p-5 transition-colors border",
+                      isCardFlagged
+                        ? "border-red-500/60 bg-red-500/[0.03] dark:bg-red-950/[0.15]"
+                        : "border-zinc-200 dark:border-zinc-800"
+                    )}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
+                          {language === "al" ? "Pyetja" : "Question"} #{qIndex + 1}
                         </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 sm:gap-3">
-                      <span className="text-xs font-semibold text-zinc-500">
-                        {language === "al" ? "Koha" : "Time"}: {q.time_limit}s
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const updated = [...questionsList];
-                          const rawOpts = [...updated[qIndex].options];
-                          for (let i = rawOpts.length - 1; i > 0; i--) {
-                            const j = Math.floor(Math.random() * (i + 1));
-                            [rawOpts[i], rawOpts[j]] = [rawOpts[j], rawOpts[i]];
-                          }
-                          const SHAPE_CONFIG = [
-                            { id: "a", color: "red", shape: "triangle" },
-                            { id: "b", color: "blue", shape: "diamond" },
-                            { id: "c", color: "yellow", shape: "circle" },
-                            { id: "d", color: "green", shape: "square" },
-                          ] as const;
-                          updated[qIndex].options = rawOpts.map((opt, oIdx) => ({
-                            ...opt,
-                            id: SHAPE_CONFIG[oIdx].id,
-                            color: SHAPE_CONFIG[oIdx].color,
-                            shape: SHAPE_CONFIG[oIdx].shape,
-                          }));
-                          setQuestionsList(updated);
-                          toast({
-                            title: language === "al" ? "Opsionet u Përzien! 🔀" : "Answers Shuffled! 🔀",
-                            description: language === "al" ? "Pozicionet e përgjigjeve u ndërruan rastësisht." : "Option positions randomized.",
-                            type: "info",
-                            duration: 1500,
-                          });
-                        }}
-                        className="text-zinc-400 hover:text-amber-500 transition-colors p-1 flex items-center gap-1 text-[11px] font-semibold cursor-pointer"
-                        title={language === "al" ? "Përziej renditjen e opsioneve" : "Shuffle option positions"}
-                      >
-                        <Shuffle className="h-3.5 w-3.5" />
-                        <span className="hidden sm:inline">{language === "al" ? "Përziej" : "Shuffle"}</span>
-                      </button>
-                      {questionsList.length > 1 && (
+                        {isCardFlagged && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-red-100 dark:bg-red-950/70 text-red-600 dark:text-red-400 border border-red-300 dark:border-red-800">
+                            <AlertTriangle className="h-3 w-3 shrink-0" />
+                            <span>{language === "al" ? "Fjalë e ndaluar" : "Prohibited word"}</span>
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        <span className="text-xs font-semibold text-zinc-500">
+                          {language === "al" ? "Koha" : "Time"}: {q.time_limit}s
+                        </span>
                         <button
                           type="button"
                           onClick={() => {
-                            setQuestionsList(questionsList.filter((_, idx) => idx !== qIndex));
-                          }}
-                          className="text-zinc-400 hover:text-red-500 transition-colors p-1 cursor-pointer"
-                          title={language === "al" ? "Fshij këtë pyetje" : "Delete this question"}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <Input
-                      type="text"
-                      placeholder={language === "al" ? "Shkruani tekstin e pyetjes..." : "Enter question text..."}
-                      value={q.question_text}
-                      onChange={(e) => {
-                        const updated = [...questionsList];
-                        updated[qIndex].question_text = e.target.value;
-                        setQuestionsList(updated);
-                      }}
-                      className={cn(
-                        "font-bold text-base mb-2",
-                        !qSafety.isSafe && "border-red-500 focus-visible:ring-red-500 text-red-700 dark:text-red-400"
-                      )}
-                    />
-                    {!qSafety.isSafe && (
-                      <p className="text-xs text-red-500 font-bold mb-3 flex items-center gap-1">
-                        <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-                        <span>{language === "al" ? qSafety.messageAl : qSafety.messageEn}</span>
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {q.options.map((opt, optIndex) => {
-                      const optSafety = checkProfanity(opt.text);
-                      return (
-                      <div
-                        key={opt.id}
-                        className={`flex items-center gap-2 p-3 rounded-xl border ${
-                          !optSafety.isSafe
-                            ? "border-red-500 bg-red-50/60 dark:bg-red-950/30"
-                            : opt.is_correct
-                            ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20"
-                            : "border-zinc-200 dark:border-zinc-800"
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name={`correct-${qIndex}`}
-                          checked={opt.is_correct}
-                          onChange={() => {
                             const updated = [...questionsList];
-                            updated[qIndex].options = updated[qIndex].options.map((o) => ({
-                              ...o,
-                              is_correct: o.id === opt.id,
+                            const rawOpts = [...updated[qIndex].options];
+                            for (let i = rawOpts.length - 1; i > 0; i--) {
+                              const j = Math.floor(Math.random() * (i + 1));
+                              [rawOpts[i], rawOpts[j]] = [rawOpts[j], rawOpts[i]];
+                            }
+                            const SHAPE_CONFIG = [
+                              { id: "a", color: "red", shape: "triangle" },
+                              { id: "b", color: "blue", shape: "diamond" },
+                              { id: "c", color: "yellow", shape: "circle" },
+                              { id: "d", color: "green", shape: "square" },
+                            ] as const;
+                            updated[qIndex].options = rawOpts.map((opt, oIdx) => ({
+                              ...opt,
+                              id: SHAPE_CONFIG[oIdx].id,
+                              color: SHAPE_CONFIG[oIdx].color,
+                              shape: SHAPE_CONFIG[oIdx].shape,
                             }));
                             setQuestionsList(updated);
+                            toast({
+                              title: language === "al" ? "Opsionet u Përzien! 🔀" : "Answers Shuffled! 🔀",
+                              description: language === "al" ? "Pozicionet e përgjigjeve u ndërruan rastësisht." : "Option positions randomized.",
+                              type: "info",
+                              duration: 1500,
+                            });
                           }}
-                          className="h-4 w-4 accent-emerald-600 cursor-pointer"
-                          title={language === "al" ? "Shënoje si përgjigje të saktë" : "Mark as correct answer"}
-                        />
-                        <div className="flex-1 flex flex-col gap-0.5">
-                          <Input
-                            type="text"
-                            placeholder={language === "al" ? `Opsioni ${opt.id.toUpperCase()}` : `Option ${opt.id.toUpperCase()}`}
-                            value={opt.text}
-                            onChange={(e) => {
-                              const updated = [...questionsList];
-                              updated[qIndex].options[optIndex].text = e.target.value;
-                              setQuestionsList(updated);
+                          className="text-zinc-400 hover:text-amber-500 transition-colors p-1 flex items-center gap-1 text-[11px] font-semibold cursor-pointer"
+                          title={language === "al" ? "Përziej renditjen e opsioneve" : "Shuffle option positions"}
+                        >
+                          <Shuffle className="h-3.5 w-3.5" />
+                          <span className="hidden sm:inline">{language === "al" ? "Përziej" : "Shuffle"}</span>
+                        </button>
+                        {questionsList.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setQuestionsList(questionsList.filter((_, idx) => idx !== qIndex));
                             }}
-                            className={cn(
-                              "h-9 text-xs sm:text-sm",
-                              !optSafety.isSafe && "border-red-500 focus-visible:ring-red-500 text-red-700 dark:text-red-400"
-                            )}
-                          />
-                          {!optSafety.isSafe && (
-                            <span className="text-[10px] text-red-500 font-bold flex items-center gap-1 mt-0.5">
-                              <AlertTriangle className="h-2.5 w-2.5 shrink-0" />
-                              <span>{language === "al" ? optSafety.messageAl : optSafety.messageEn}</span>
-                            </span>
-                          )}
-                        </div>
-                        <span className="text-xs font-bold text-zinc-400 uppercase w-6 text-center">
-                          {opt.id}
-                        </span>
+                            className="text-zinc-400 hover:text-red-500 transition-colors p-1 cursor-pointer"
+                            title={language === "al" ? "Fshij këtë pyetje" : "Delete this question"}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
-                    );})}
-                  </div>
-                </Card>
-              );})}
+                    </div>
+
+                    <div>
+                      <Input
+                        type="text"
+                        placeholder={language === "al" ? "Shkruani tekstin e pyetjes..." : "Enter question text..."}
+                        value={q.question_text}
+                        onChange={(e) => {
+                          const updated = [...questionsList];
+                          updated[qIndex].question_text = e.target.value;
+                          setQuestionsList(updated);
+                        }}
+                        className={cn(
+                          "font-bold text-base mb-2",
+                          !qSafety.isSafe && "border-red-500 focus-visible:ring-red-500 text-red-700 dark:text-red-400"
+                        )}
+                      />
+                      {!qSafety.isSafe && (
+                        <p className="text-xs text-red-500 font-bold mb-3 flex items-center gap-1">
+                          <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                          <span>{language === "al" ? qSafety.messageAl : qSafety.messageEn}</span>
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {q.options.map((opt, optIndex) => {
+                        const optSafety = checkProfanity(opt.text);
+                        return (
+                          <div
+                            key={opt.id}
+                            className={`flex items-center gap-2 p-3 rounded-xl border ${!optSafety.isSafe
+                              ? "border-red-500 bg-red-50/60 dark:bg-red-950/30"
+                              : opt.is_correct
+                                ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20"
+                                : "border-zinc-200 dark:border-zinc-800"
+                              }`}
+                          >
+                            <input
+                              type="radio"
+                              name={`correct-${qIndex}`}
+                              checked={opt.is_correct}
+                              onChange={() => {
+                                const updated = [...questionsList];
+                                updated[qIndex].options = updated[qIndex].options.map((o) => ({
+                                  ...o,
+                                  is_correct: o.id === opt.id,
+                                }));
+                                setQuestionsList(updated);
+                              }}
+                              className="h-4 w-4 accent-emerald-600 cursor-pointer"
+                              title={language === "al" ? "Shënoje si përgjigje të saktë" : "Mark as correct answer"}
+                            />
+                            <div className="flex-1 flex flex-col gap-0.5">
+                              <Input
+                                type="text"
+                                placeholder={language === "al" ? `Opsioni ${opt.id.toUpperCase()}` : `Option ${opt.id.toUpperCase()}`}
+                                value={opt.text}
+                                onChange={(e) => {
+                                  const updated = [...questionsList];
+                                  updated[qIndex].options[optIndex].text = e.target.value;
+                                  setQuestionsList(updated);
+                                }}
+                                className={cn(
+                                  "h-9 text-xs sm:text-sm",
+                                  !optSafety.isSafe && "border-red-500 focus-visible:ring-red-500 text-red-700 dark:text-red-400"
+                                )}
+                              />
+                              {!optSafety.isSafe && (
+                                <span className="text-[10px] text-red-500 font-bold flex items-center gap-1 mt-0.5">
+                                  <AlertTriangle className="h-2.5 w-2.5 shrink-0" />
+                                  <span>{language === "al" ? optSafety.messageAl : optSafety.messageEn}</span>
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-xs font-bold text-zinc-400 uppercase w-6 text-center">
+                              {opt.id}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </Card>
+                );
+              })}
 
               {/* Content safety warning banner if any part violates moderation */}
               {(() => {
@@ -2600,6 +2619,80 @@ export default function Quiz() {
               </div>
             </motion.div>
           )}
+        </div>
+      )}
+
+      {/* =========================================================================
+          HOST LIVE GAME SELECTION CONTAINER
+         ========================================================================= */}
+      {mode === "host" && (
+        <div className="flex-1 space-y-8 animate-in fade-in duration-200">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-zinc-200 dark:border-zinc-800 pb-4">
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-zinc-900 dark:text-zinc-50">
+                {language === "al" ? "Krijo një Lojë Live" : "Host a Live Game"}
+              </h2>
+              <p className="text-xs sm:text-sm text-zinc-500 mt-1 font-medium">
+                {language === "al"
+                  ? "Zgjidhni një kuiz për të gjeneruar PIN-in dhe për të ftuar pjesëmarrësit në kohë reale."
+                  : "Select a quiz to generate your game PIN and host participants in real time."}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setMode("create");
+                  setCreationTab("ai");
+                }}
+                className="font-bold text-xs cursor-pointer"
+              >
+                {language === "al" ? "Krijo me AI" : "Create with AI"}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setMode("create");
+                  setCreationTab("manual");
+                }}
+                className="font-bold text-xs cursor-pointer"
+              >
+                {language === "al" ? "Krijo Manualisht" : "Create Manually"}
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {availableQuizzes.map((quiz) => (
+              <Card
+                key={quiz.id}
+                className="border-zinc-200 dark:border-zinc-800 flex flex-col justify-between hover:shadow-md transition-all"
+              >
+                <CardHeader className="p-4 pb-2">
+                  <div className="flex items-center justify-between text-xs text-zinc-400 font-semibold mb-1">
+                    <span>{quiz.category}</span>
+                    <span>{quiz.questions?.length || 0} Qs</span>
+                  </div>
+                  <CardTitle className="text-base font-bold line-clamp-1">
+                    {quiz.title}
+                  </CardTitle>
+                  <p className="text-xs text-zinc-500 line-clamp-2 mt-1">
+                    {quiz.description || "Live challenge."}
+                  </p>
+                </CardHeader>
+                <CardFooter className="p-4 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                  <Button
+                    onClick={() => router.push(`/live/host?quizId=${quiz.id}`)}
+                    className="w-full font-bold text-xs bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 cursor-pointer"
+                  >
+                    {language === "al" ? "Fillo Lojë me PIN" : "Launch with PIN"}
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
         </div>
       )}
 
@@ -2687,18 +2780,16 @@ export default function Quiz() {
                   </div>
                   <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1 leading-relaxed">
                     {language === "al"
-                      ? `Çdokush në Quizemia mund ta zbulojë dhe luajë këtë kuiz në Arenën publike. Do të shfaqet me autorin tuaj: @${
-                          user?.user_metadata?.nickname ||
-                          user?.user_metadata?.name ||
-                          user?.user_metadata?.display_name ||
-                          (user?.email ? user.email.split("@")[0] : "Quizemia Creator")
-                        }.`
-                      : `Anyone on Quizemia can discover and play this quiz in the public Arena. It will be published under your nickname: @${
-                          user?.user_metadata?.nickname ||
-                          user?.user_metadata?.name ||
-                          user?.user_metadata?.display_name ||
-                          (user?.email ? user.email.split("@")[0] : "Quizemia Creator")
-                        }.`}
+                      ? `Çdokush në Quizemia mund ta zbulojë dhe luajë këtë kuiz në Arenën publike. Do të shfaqet me autorin tuaj: @${user?.user_metadata?.nickname ||
+                      user?.user_metadata?.name ||
+                      user?.user_metadata?.display_name ||
+                      (user?.email ? user.email.split("@")[0] : "Quizemia Creator")
+                      }.`
+                      : `Anyone on Quizemia can discover and play this quiz in the public Arena. It will be published under your nickname: @${user?.user_metadata?.nickname ||
+                      user?.user_metadata?.name ||
+                      user?.user_metadata?.display_name ||
+                      (user?.email ? user.email.split("@")[0] : "Quizemia Creator")
+                      }.`}
                   </p>
                 </div>
               </div>
@@ -2758,34 +2849,45 @@ export default function Quiz() {
               >
                 {language === "al" ? "Kthehu te Ndryshimi" : "Back to Editing"}
               </Button>
-              <Button
-                type="button"
-                disabled={isSavingQuiz}
-                onClick={() => handleConfirmSave(isPublic)}
-                className={cn(
-                  "w-full sm:w-auto font-black text-white px-6 py-2 rounded-xl shadow-lg active:scale-95 transition-all gap-2 cursor-pointer",
-                  isPublic
-                    ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/25"
-                    : "bg-blue-600 hover:bg-blue-700 shadow-blue-500/25"
-                )}
-              >
-                {isSavingQuiz ? (
-                  <span>{language === "al" ? "Po ruhet kuizi..." : "Saving Quiz..."}</span>
-                ) : (
-                  <>
-                    <span>
-                      {language === "al"
-                        ? isPublic
-                          ? "Publiko Publikisht & Luaj"
-                          : "Mbaj Privat & Luaj"
-                        : isPublic
-                          ? "Publish Publicly & Play"
-                          : "Keep Private & Play"}
-                    </span>
-                    <ArrowRight className="h-4 w-4" />
-                  </>
-                )}
-              </Button>
+              <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full sm:w-auto">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isSavingQuiz}
+                  onClick={() => handleConfirmSave(isPublic, true)}
+                  className="w-full sm:w-auto font-bold text-xs sm:text-sm border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
+                >
+                  {language === "al" ? "Ruaj & Fillo Lojë Live (PIN)" : "Save & Host Live (PIN)"}
+                </Button>
+                <Button
+                  type="button"
+                  disabled={isSavingQuiz}
+                  onClick={() => handleConfirmSave(isPublic, false)}
+                  className={cn(
+                    "w-full sm:w-auto font-black text-white px-6 py-2 rounded-xl shadow-lg active:scale-95 transition-all gap-2 cursor-pointer",
+                    isPublic
+                      ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/25"
+                      : "bg-blue-600 hover:bg-blue-700 shadow-blue-500/25"
+                  )}
+                >
+                  {isSavingQuiz ? (
+                    <span>{language === "al" ? "Po ruhet kuizi..." : "Saving Quiz..."}</span>
+                  ) : (
+                    <>
+                      <span>
+                        {language === "al"
+                          ? isPublic
+                            ? "Publiko & Luaj"
+                            : "Ruaj Privat & Luaj"
+                          : isPublic
+                            ? "Publish & Play"
+                            : "Save Private & Play"}
+                      </span>
+                      <ArrowRight className="h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+              </div>
             </DialogFooter>
           </DialogContent>
         </Dialog>

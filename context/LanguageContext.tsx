@@ -22,6 +22,8 @@ export interface Translations {
     myQuizzes: string;
     playCreate: string;
     aboutUs: string;
+    enterPin: string;
+    hostGame: string;
     signIn: string;
     getStarted: string;
     signOut: string;
@@ -230,6 +232,34 @@ export interface Translations {
     noPlayersFound: string;
     pointsLabel: string;
   };
+  live: {
+    title: string;
+    subtitle: string;
+    hostGameTitle: string;
+    hostGameSubtitle: string;
+    enterGameTitle: string;
+    enterGameSubtitle: string;
+    gamePin: string;
+    nickname: string;
+    nicknamePlaceholder: string;
+    joinButton: string;
+    createLobbyButton: string;
+    startGameButton: string;
+    waitingForHost: string;
+    playersJoined: string;
+    questionProgress: string;
+    answersCount: string;
+    submittedWaiting: string;
+    correct: string;
+    incorrect: string;
+    nextQuestion: string;
+    showStandings: string;
+    podiumTitle: string;
+    returnHome: string;
+    selectQuizPrompt: string;
+    noPinError: string;
+    invalidPinError: string;
+  };
 }
 
 const TRANSLATIONS: Record<Language, Translations> = {
@@ -240,6 +270,8 @@ const TRANSLATIONS: Record<Language, Translations> = {
       myQuizzes: "My Quizzes",
       playCreate: "Play / Create",
       aboutUs: "About Us",
+      enterPin: "Enter PIN",
+      hostGame: "Host Game",
       signIn: "Sign In",
       getStarted: "Get Started",
       signOut: "Sign Out",
@@ -321,9 +353,9 @@ const TRANSLATIONS: Record<Language, Translations> = {
         "Generate 4-option battle quizzes in seconds using AI from notes, images, or any topic. Join thousands of students and curious minds in fast-paced arena battles!",
       inputPlaceholder: "Paste notes or drop lesson image...",
       uploadTooltip: "Upload lesson notes or image (PDF, TXT, PNG)",
-      generateButton: "Generate Quiz ✨",
+      generateButton: "Generate Quiz",
       tryLabel: "Try:",
-      tryChips: ["🧬 Photosynthesis", "🪐 Solar System", "🏛️ Roman History", "⚡ Python Code"],
+      tryChips: ["Photosynthesis", "Solar System", "Roman History", "Python Code"],
       howItWorks: "How It Works",
       card: {
         questionBadge: "Q 3/10",
@@ -510,6 +542,34 @@ const TRANSLATIONS: Record<Language, Translations> = {
       noPlayersFound: "No players found matching your search.",
       pointsLabel: "pts",
     },
+    live: {
+      title: "Live Arena",
+      subtitle: "Synchronized real-time multiplayer challenge.",
+      hostGameTitle: "Host a Live Game",
+      hostGameSubtitle: "Choose a quiz and display the game code for participants.",
+      enterGameTitle: "Join Live Game",
+      enterGameSubtitle: "Enter the 6-digit game PIN to participate.",
+      gamePin: "Game PIN",
+      nickname: "Your Nickname",
+      nicknamePlaceholder: "Enter your display name",
+      joinButton: "Join Game",
+      createLobbyButton: "Launch Live Lobby",
+      startGameButton: "Start Game",
+      waitingForHost: "Waiting for the host to start the game...",
+      playersJoined: "Participants Joined",
+      questionProgress: "Question",
+      answersCount: "Answers received",
+      submittedWaiting: "Answer recorded. Waiting for round completion.",
+      correct: "Correct Answer",
+      incorrect: "Incorrect",
+      nextQuestion: "Next Question",
+      showStandings: "View Round Standings",
+      podiumTitle: "Final Standings",
+      returnHome: "Return to Arena",
+      selectQuizPrompt: "Select a quiz to host:",
+      noPinError: "Please enter a valid PIN.",
+      invalidPinError: "Game room not found or session ended.",
+    },
   },
   al: {
     nav: {
@@ -518,6 +578,8 @@ const TRANSLATIONS: Record<Language, Translations> = {
       myQuizzes: "Kuizet e Mia",
       playCreate: "Luaj / Krijo",
       aboutUs: "Rreth Nesh",
+      enterPin: "Shkruaj PIN",
+      hostGame: "Krijo Lojë",
       signIn: "Hyr",
       getStarted: "Fillo Tani",
       signOut: "Dil",
@@ -788,6 +850,34 @@ const TRANSLATIONS: Record<Language, Translations> = {
       noPlayersFound: "Nuk u gjet asnjë lojtar me këtë emër.",
       pointsLabel: "pikë",
     },
+    live: {
+      title: "Arena e Drejtpërdrejtë",
+      subtitle: "Sfidë e sinkronizuar në kohë reale me shumë lojtarë.",
+      hostGameTitle: "Fillo një Lojë Live",
+      hostGameSubtitle: "Zgjidhni një kuiz dhe shfaqni kodin e lojës për pjesëmarrësit.",
+      enterGameTitle: "Bashkohu në Lojë Live",
+      enterGameSubtitle: "Shkruani PIN-in 6-shifror për të marrë pjesë.",
+      gamePin: "PIN-i i Lojës",
+      nickname: "Pseudonimi Juaj",
+      nicknamePlaceholder: "Shkruani emrin tuaj",
+      joinButton: "Bashkohu në Lojë",
+      createLobbyButton: "Fillo Hollin Live",
+      startGameButton: "Fillo Lojën",
+      waitingForHost: "Duke pritur organizatorin të nisë lojën...",
+      playersJoined: "Pjesëmarrës të Bashkuar",
+      questionProgress: "Pyetja",
+      answersCount: "Përgjigje të pranuara",
+      submittedWaiting: "Përgjigja u regjistrua. Duke pritur përfundimin e raundit.",
+      correct: "Përgjigje e Saktë",
+      incorrect: "E Pasaktë",
+      nextQuestion: "Pyetja e Radhës",
+      showStandings: "Shiko Renditjen e Raundit",
+      podiumTitle: "Renditja Përfundimtare",
+      returnHome: "Kthehu në Arenë",
+      selectQuizPrompt: "Zgjidhni një kuiz për të organizuar:",
+      noPinError: "Ju lutem shkruani një PIN të vlefshëm.",
+      invalidPinError: "Dhoma e lojës nuk u gjet ose seanca ka përfunduar.",
+    },
   },
 };
 
@@ -799,7 +889,7 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType>({
   language: "en",
-  setLanguage: () => {},
+  setLanguage: () => { },
   t: TRANSLATIONS.en,
 });
 

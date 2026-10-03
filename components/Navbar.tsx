@@ -72,8 +72,19 @@ export function Navbar() {
           })}
         </nav>
 
-        {/* Desktop Actions: Language Switcher + User Auth */}
-        <div className="hidden md:flex items-center gap-3">
+        {/* Desktop Actions: Enter PIN + Language Switcher + User Auth */}
+        <div className="hidden md:flex items-center gap-2.5">
+          {/* Enter PIN Button */}
+          <Link href="/live/join">
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-full px-3.5 py-1 text-xs font-bold border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all tracking-wide cursor-pointer"
+            >
+              {t.nav.enterPin}
+            </Button>
+          </Link>
+
           {/* Language Switcher for EN / AL */}
           <div className="flex items-center p-1 rounded-full bg-zinc-100/90 dark:bg-zinc-900/90 border border-zinc-200/80 dark:border-zinc-800/80 text-xs font-bold">
             <button
@@ -180,6 +191,18 @@ export function Navbar() {
                 </Link>
               );
             })}
+
+            {/* Mobile Enter PIN Link */}
+            <Link
+              href="/live/join"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center justify-between px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 font-bold text-sm text-zinc-900 dark:text-zinc-100 bg-zinc-50 dark:bg-zinc-900/60"
+            >
+              <span>{t.nav.enterPin}</span>
+              <span className="text-[10px] font-mono font-black px-2 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800">
+                PIN
+              </span>
+            </Link>
           </div>
 
           {/* Mobile Language Switcher */}

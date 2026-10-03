@@ -130,7 +130,6 @@ export default function Leaderboard() {
               size="sm"
               className="rounded-full text-xs font-bold gap-1.5 bg-gradient-to-r from-red-600 to-amber-500 hover:opacity-95 text-white shadow-sm"
             >
-              <Zap className="h-3.5 w-3.5 fill-current" />
               <span>{language === "al" ? "Luaj & Fito Pikë" : "Play & Earn Points"}</span>
             </Button>
           </Link>
@@ -149,9 +148,6 @@ export default function Leaderboard() {
             <Card className="border-amber-300/60 dark:border-amber-700/60 bg-gradient-to-br from-amber-500/[0.04] via-orange-500/[0.02] to-yellow-500/[0.04] shadow-md p-5 sm:p-6">
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold shadow-sm">
-                    <Sparkles className="h-4 w-4" />
-                  </div>
                   <div>
                     <h3 className="text-sm sm:text-base font-black text-zinc-900 dark:text-white">
                       {t.leaderboard.howPointsWork}
@@ -243,9 +239,6 @@ export default function Leaderboard() {
             <span className="font-extrabold text-xs sm:text-base text-zinc-900 dark:text-white truncate max-w-[100px] sm:max-w-[150px]">
               {rank2.nickname}
             </span>
-            <span className="text-[10px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400">
-              {language === "al" ? rank2.tier_title_al : rank2.tier_title_en}
-            </span>
 
             {/* Pillar #2 */}
             <div className="w-full mt-3 h-24 sm:h-36 rounded-t-2xl sm:rounded-t-3xl bg-gradient-to-b from-slate-200 to-slate-300/80 dark:from-slate-800 dark:to-slate-900 border-t-4 border-slate-400 flex flex-col items-center justify-center p-2 shadow-inner">
@@ -281,9 +274,6 @@ export default function Leaderboard() {
 
             <span className="font-black text-sm sm:text-lg text-zinc-900 dark:text-white truncate max-w-[110px] sm:max-w-[180px]">
               {rank1.nickname}
-            </span>
-            <span className="text-[10px] sm:text-xs font-bold text-amber-600 dark:text-amber-400">
-              👑 {language === "al" ? rank1.tier_title_al : rank1.tier_title_en}
             </span>
 
             {/* Pillar #1 */}
@@ -322,9 +312,6 @@ export default function Leaderboard() {
             <span className="font-extrabold text-xs sm:text-base text-zinc-900 dark:text-white truncate max-w-[100px] sm:max-w-[150px]">
               {rank3.nickname}
             </span>
-            <span className="text-[10px] sm:text-xs font-semibold text-amber-700 dark:text-amber-400">
-              {language === "al" ? rank3.tier_title_al : rank3.tier_title_en}
-            </span>
 
             {/* Pillar #3 */}
             <div className="w-full mt-3 h-20 sm:h-28 rounded-t-2xl sm:rounded-t-3xl bg-gradient-to-b from-amber-100 to-amber-200/80 dark:from-zinc-800 dark:to-zinc-900 border-t-4 border-amber-700 flex flex-col items-center justify-center p-2 shadow-inner">
@@ -358,8 +345,6 @@ export default function Leaderboard() {
                     </span>
                   </div>
                   <div className="text-xs text-blue-100 flex items-center gap-2 mt-0.5">
-                    <span>{language === "al" ? currentUserEntry.tier_title_al : currentUserEntry.tier_title_en}</span>
-                    <span>•</span>
                     <span>{currentUserEntry.quizzes_played} {language === "al" ? "kuize" : "quizzes"}</span>
                   </div>
                 </div>
@@ -586,11 +571,8 @@ export default function Leaderboard() {
                                 </span>
                               )}
                             </div>
-                            <div className="text-[11px] text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5 mt-0.5">
-                              <span>
-                                {language === "al" ? player.tier_title_al : player.tier_title_en}
-                              </span>
-                              <span className="sm:hidden">• {player.accuracy_percentage}% acc</span>
+                            <div className="text-[11px] text-zinc-500 dark:text-zinc-400 sm:hidden mt-0.5">
+                              {player.accuracy_percentage}% acc
                             </div>
                           </div>
                         </div>
