@@ -16,6 +16,7 @@ import {
   Info,
   LogOut,
   User as UserIcon,
+  Trophy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +28,7 @@ export function Navbar() {
 
   const navLinks = [
     { name: t.nav.dashboard, href: "/dashboard", icon: LayoutDashboard },
+    { name: t.nav.leaderboard, href: "/leaderboard", icon: Trophy },
     { name: t.nav.myQuizzes, href: "/my-quizzes", icon: Layers },
     { name: t.nav.playCreate, href: "/quiz", icon: PlusCircle },
     { name: t.nav.aboutUs, href: "/about-us", icon: Info },

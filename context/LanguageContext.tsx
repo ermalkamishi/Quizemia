@@ -18,6 +18,7 @@ export interface AnswerOptionTranslation {
 export interface Translations {
   nav: {
     dashboard: string;
+    leaderboard: string;
     myQuizzes: string;
     playCreate: string;
     aboutUs: string;
@@ -201,12 +202,41 @@ export interface Translations {
     noAccount: string;
     hasAccount: string;
   };
+  leaderboard: {
+    title: string;
+    subtitle: string;
+    allTime: string;
+    weekly: string;
+    today: string;
+    searchPlaceholder: string;
+    rankCol: string;
+    playerCol: string;
+    pointsCol: string;
+    playedCol: string;
+    createdCol: string;
+    accuracyCol: string;
+    streakCol: string;
+    howPointsWork: string;
+    howPointsDesc: string;
+    correctAnswerRule: string;
+    speedBonusRule: string;
+    streakBonusRule: string;
+    completionBonusRule: string;
+    creatorBonusRule: string;
+    yourRankTitle: string;
+    yourRankSubtitle: string;
+    signInPrompt: string;
+    guestNotice: string;
+    noPlayersFound: string;
+    pointsLabel: string;
+  };
 }
 
 const TRANSLATIONS: Record<Language, Translations> = {
   en: {
     nav: {
       dashboard: "Dashboard",
+      leaderboard: "Leaderboard",
       myQuizzes: "My Quizzes",
       playCreate: "Play / Create",
       aboutUs: "About Us",
@@ -452,10 +482,39 @@ const TRANSLATIONS: Record<Language, Translations> = {
       noAccount: "Don't have an account?",
       hasAccount: "Already have an account?",
     },
+    leaderboard: {
+      title: "Global Leaderboard",
+      subtitle: "Race against other quiz masters, earn skill-based points, and climb to the top of the podium!",
+      allTime: "All-Time",
+      weekly: "This Week",
+      today: "Today",
+      searchPlaceholder: "Search player by nickname...",
+      rankCol: "Rank",
+      playerCol: "Player",
+      pointsCol: "Total Points",
+      playedCol: "Played",
+      createdCol: "Created",
+      accuracyCol: "Accuracy",
+      streakCol: "Best Streak",
+      howPointsWork: "How Points Are Earned",
+      howPointsDesc: "Points are awarded through skill, speed, accuracy, and active community contributions:",
+      correctAnswerRule: "+100 pts per correct answer",
+      speedBonusRule: "Up to +50 pts speed bonus for quick answers",
+      streakBonusRule: "+10 to +50 pts bonus for consecutive answers",
+      completionBonusRule: "+50 to +150 pts bonus for finishing a quiz",
+      creatorBonusRule: "+200 pts bonus for creating and publishing a quiz",
+      yourRankTitle: "Your Standing",
+      yourRankSubtitle: "Keep playing and creating to climb the ranks!",
+      signInPrompt: "Sign In to Record Your Points",
+      guestNotice: "You are currently playing as a guest. Sign in or create an account to save your points permanently and enter the global race!",
+      noPlayersFound: "No players found matching your search.",
+      pointsLabel: "pts",
+    },
   },
   al: {
     nav: {
       dashboard: "Paneli",
+      leaderboard: "Renditja",
       myQuizzes: "Kuizet e Mia",
       playCreate: "Luaj / Krijo",
       aboutUs: "Rreth Nesh",
@@ -700,6 +759,34 @@ const TRANSLATIONS: Record<Language, Translations> = {
       signupButton: "Krijo Llogari",
       noAccount: "Nuk ke një llogari?",
       hasAccount: "Ke tashmë një llogari?",
+    },
+    leaderboard: {
+      title: "Tabela e Renditjes Globale",
+      subtitle: "Garoni kundër mjeshtërve të tjerë të kuizeve, fitoni pikë reale dhe ngjituni në majë të podiumit!",
+      allTime: "Gjithë Kohës",
+      weekly: "Këtë Javë",
+      today: "Sot",
+      searchPlaceholder: "Kërko lojtarin sipas emrit...",
+      rankCol: "Renditja",
+      playerCol: "Lojtari",
+      pointsCol: "Pikët Totale",
+      playedCol: "Luajtur",
+      createdCol: "Krijuar",
+      accuracyCol: "Saktësia",
+      streakCol: "Seria më e Mirë",
+      howPointsWork: "Si Fitohen Pikët",
+      howPointsDesc: "Pikët fitohen përmes shkathtësisë, shpejtësisë, saktësisë dhe kontributeve në komunitet:",
+      correctAnswerRule: "+100 pikë për çdo përgjigje të saktë",
+      speedBonusRule: "Deri në +50 pikë bonus shpejtësie për përgjigje të shpejta",
+      streakBonusRule: "+10 deri +50 pikë bonus për seri përgjigjesh të sakta radhazi",
+      completionBonusRule: "+50 deri +150 pikë bonus për përfundimin me sukses të kuizit",
+      creatorBonusRule: "+200 pikë bonus për krijimin dhe publikimin e një kuizi",
+      yourRankTitle: "Pozicioni Juaj",
+      yourRankSubtitle: "Vazhdoni të luani dhe të krijoni për t'u ngjitur në renditje!",
+      signInPrompt: "Hyni për të Regjistruar Pikët Tuaja",
+      guestNotice: "Aktualisht po luani si mysafir. Hyni ose krijoni një llogari për të ruajtur pikët dhe për t'u bërë pjesë e garës globale!",
+      noPlayersFound: "Nuk u gjet asnjë lojtar me këtë emër.",
+      pointsLabel: "pikë",
     },
   },
 };

@@ -17,6 +17,7 @@ import {
   X,
   Globe,
   User as UserIcon,
+  Trophy,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -263,8 +264,8 @@ export default function Dashboard() {
                 ))}
               </div>
 
-              {/* Repositioned How It Works Action */}
-              <div className="pt-2">
+              {/* Repositioned Actions: How It Works & Leaderboard */}
+              <div className="pt-2 flex flex-wrap items-center gap-3">
                 <Link href="/about-us#how-it-works">
                   <Button
                     variant="outline"
@@ -273,6 +274,17 @@ export default function Dashboard() {
                   >
                     <HelpCircle className="h-4 w-4 text-amber-300" />
                     <span>{t.hero.howItWorks}</span>
+                    <ArrowRight className="h-3.5 w-3.5 opacity-70" />
+                  </Button>
+                </Link>
+                <Link href="/leaderboard">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-amber-400/15 hover:bg-amber-400/25 text-amber-200 border-amber-300/40 backdrop-blur-md rounded-xl font-bold text-xs sm:text-sm px-4 py-2 transition-all hover:scale-105 active:scale-95 gap-2 cursor-pointer shadow-sm"
+                  >
+                    <Trophy className="h-4 w-4 text-amber-400 fill-amber-400/20" />
+                    <span>{language === "al" ? "Renditja Botërore" : "Global Leaderboard"}</span>
                     <ArrowRight className="h-3.5 w-3.5 opacity-70" />
                   </Button>
                 </Link>

@@ -62,6 +62,12 @@ import {
 } from "@/lib/supabase/queries";
 import { checkProfanity, validateQuizContent } from "@/lib/moderation";
 import { getCategoryTheme } from "@/lib/categoryThemes";
+import {
+  calculateAnswerPoints,
+  calculateCompletionBonus,
+  recordMatchResult,
+  recordQuizCreatedBonus,
+} from "@/lib/leaderboard";
 
 const CATEGORIES = ["All", "General", "Geography", "Science", "Technology", "History", "Pop Culture"];
 
@@ -134,6 +140,9 @@ export default function Quiz() {
   const [lastAnswerResult, setLastAnswerResult] = useState<{ correct: boolean; points?: number } | null>(null);
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
+  const [correctCount, setCorrectCount] = useState(0);
+  const [maxStreak, setMaxStreak] = useState(0);
+  const [earnedCompletionBonus, setEarnedCompletionBonus] = useState(0);
   const [timeLeft, setTimeLeft] = useState(20);
   const [isGameOver, setIsGameOver] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -257,6 +266,9 @@ export default function Quiz() {
     setLastAnswerResult(null);
     setScore(0);
     setStreak(0);
+    setCorrectCount(0);
+    setMaxStreak(0);
+    setEarnedCompletionBonus(0);
     setIsGameOver(false);
     const initialTime = randomizedQuestions[0]?.time_limit || 20;
     setTimeLeft(initialTime);
@@ -377,30 +389,33 @@ export default function Quiz() {
     setIsAnswerRevealed(true);
 
     if (option.is_correct) {
+      const currentQ = activeQuiz?.questions?.[currentQuestionIdx];
+      const maxTime = currentQ?.time_limit || 20;
+      const { total: pointsEarned, speedBonus, streakBonus } = calculateAnswerPoints(timeLeft, maxTime, streak);
+
+      const nextStreak = streak + 1;
+      setStreak(nextStreak);
+      setMaxStreak((prev) => Math.max(prev, nextStreak));
+      setCorrectCount((prev) => prev + 1);
+      setScore((prev) => prev + pointsEarned);
+      setLastAnswerResult({ correct: true, points: pointsEarned });
+
+      const bonusItems: string[] = [];
+      if (speedBonus > 0) bonusItems.push(`+${speedBonus} ${language === "al" ? "shpejtësi" : "speed"}`);
+      if (streakBonus > 0) bonusItems.push(`+${streakBonus} ${language === "al" ? "seri" : "streak"}`);
+      const bonusSuffix = bonusItems.length > 0 ? ` (${bonusItems.join(", ")})` : "";
+
       if (user) {
-        // Calculate speed-based score Kahoot-style: base points + speed bonus
-        const currentQ = activeQuiz?.questions?.[currentQuestionIdx];
-        const maxTime = currentQ?.time_limit || 20;
-        const speedFraction = Math.max(timeLeft / maxTime, 0.2);
-        const pointsEarned = Math.round(1000 * speedFraction + streak * 100);
-
-        setScore((prev) => prev + pointsEarned);
-        setStreak((prev) => prev + 1);
-        setLastAnswerResult({ correct: true, points: pointsEarned });
-
         toast({
           title: language === "al" ? "Saktë! 🎉" : "Correct! 🎉",
-          description: `+${pointsEarned} pts (Speed Bonus)`,
+          description: `+${pointsEarned} pts${bonusSuffix}`,
           type: "success",
           duration: 1700,
         });
       } else {
-        // Guests do NOT get permanent rank points
-        setStreak((prev) => prev + 1);
-        setLastAnswerResult({ correct: true });
         toast({
           title: language === "al" ? "Saktë! 🎉" : "Correct! 🎉",
-          description: language === "al" ? "Hyni për të ruajtur pikët!" : "Sign in to earn points!",
+          description: `+${pointsEarned} pts${bonusSuffix} ${language === "al" ? "(Hyni për renditje)" : "(Sign in for ranking)"}`,
           type: "success",
           duration: 1700,
         });
@@ -447,6 +462,30 @@ export default function Quiz() {
       if (activeQuiz.id) {
         incrementQuizPlayCount(activeQuiz.id);
       }
+
+      // Calculate Quiz Completion Mastery Bonus
+      const qTotal = activeQuiz.questions.length;
+      const completionBonus = calculateCompletionBonus(correctCount, qTotal);
+      setEarnedCompletionBonus(completionBonus);
+
+      const finalMatchScore = score + (user ? completionBonus : 0);
+      if (user) {
+        setScore(finalMatchScore);
+        const nickname =
+          user.user_metadata?.nickname ||
+          user.user_metadata?.name ||
+          (user.email ? user.email.split("@")[0] : "Player");
+
+        recordMatchResult({
+          userId: user.id,
+          nickname,
+          matchScore: finalMatchScore,
+          correctAnswers: correctCount,
+          totalQuestions: qTotal,
+          bestStreak: maxStreak,
+        });
+      }
+
       try {
         confetti({
           particleCount: 120,
@@ -678,17 +717,18 @@ export default function Quiz() {
 
     if (result.success && result.quiz) {
       if (user) {
+        recordQuizCreatedBonus(user.id, creatorNickname);
         toast({
           title: publishChoice
-            ? (language === "al" ? "Kuizi u Publikua Publikisht! 🌍" : "Quiz Published Publicly! 🌍")
-            : (language === "al" ? "Kuizi Privat u Ruajt! 🔒" : "Private Quiz Saved! 🔒"),
+            ? (language === "al" ? "Kuizi u Publikua! +200 Pikë 🏆" : "Quiz Published! +200 Points 🏆")
+            : (language === "al" ? "Kuizi Privat u Ruajt! +200 Pikë 🏆" : "Private Quiz Saved! +200 Points 🏆"),
           description: publishChoice
             ? (language === "al"
-                ? `"${result.quiz.title}" u publikua në Arenë që të gjithë të mund të luajnë!`
-                : `"${result.quiz.title}" is published to the Arena so anyone can play!`)
+                ? `"${result.quiz.title}" u publikua! Fitove +200 pikë krijuesi në renditje!`
+                : `"${result.quiz.title}" is published! You earned +200 creator points on the leaderboard!`)
             : (language === "al"
-                ? `"${result.quiz.title}" u ruajt si privat. Vetëm ata me lidhje direkte mund të luajnë!`
-                : `"${result.quiz.title}" is saved as private. Only direct link holders can play!`),
+                ? `"${result.quiz.title}" u ruajt! Fitove +200 pikë krijuesi në renditje!`
+                : `"${result.quiz.title}" is saved! You earned +200 creator points on the leaderboard!`),
           type: "success",
         });
         setAvailableQuizzes((prev) => [result.quiz!, ...prev]);
@@ -793,10 +833,10 @@ export default function Quiz() {
               </div>
 
               {/* Score Metric Cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-2">
-                <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-800">
-                  <span className="text-xs font-semibold text-zinc-400 uppercase">
-                    {language === "al" ? "Pikët Përfundimtare" : "Final Score"}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                <div className="p-3.5 sm:p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-center">
+                  <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
+                    {language === "al" ? "Pikët Totale" : "Final Score"}
                   </span>
                   <p className="text-2xl sm:text-3xl font-black text-amber-500 mt-1">
                     {user ? score.toLocaleString() : "0 pts"}
@@ -807,21 +847,38 @@ export default function Quiz() {
                     </span>
                   )}
                 </div>
-                <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-800">
-                  <span className="text-xs font-semibold text-zinc-400 uppercase">
-                    {language === "al" ? "Pyetje" : "Questions"}
+                <div className="p-3.5 sm:p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-center">
+                  <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
+                    {language === "al" ? "Saktësia" : "Accuracy"}
                   </span>
-                  <p className="text-2xl sm:text-3xl font-black text-blue-600 mt-1">
-                    {totalQuestions}
+                  <p className="text-2xl sm:text-3xl font-black text-emerald-500 mt-1">
+                    {totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0}%
                   </p>
+                  <span className="text-[10px] font-medium text-zinc-400 block mt-0.5">
+                    {correctCount}/{totalQuestions} {language === "al" ? "të sakta" : "correct"}
+                  </span>
                 </div>
-                <div className="col-span-2 sm:col-span-1 p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-800">
-                  <span className="text-xs font-semibold text-zinc-400 uppercase">
+                <div className="p-3.5 sm:p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-center">
+                  <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
                     {language === "al" ? "Seria Maksimale" : "Max Streak"}
                   </span>
                   <p className="text-2xl sm:text-3xl font-black text-red-500 mt-1">
-                    🔥 {streak}x
+                    🔥 {maxStreak}x
                   </p>
+                  <span className="text-[10px] font-medium text-zinc-400 block mt-0.5">
+                    {language === "al" ? "Rresht të sakta" : "In a row"}
+                  </span>
+                </div>
+                <div className="p-3.5 sm:p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-center">
+                  <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
+                    {language === "al" ? "Bonus Kuizi" : "Quiz Bonus"}
+                  </span>
+                  <p className="text-2xl sm:text-3xl font-black text-blue-500 mt-1">
+                    +{earnedCompletionBonus}
+                  </p>
+                  <span className="text-[10px] font-medium text-zinc-400 block mt-0.5">
+                    {language === "al" ? "Përfundim me sukses" : "Completion bonus"}
+                  </span>
                 </div>
               </div>
 
@@ -829,8 +886,8 @@ export default function Quiz() {
                 <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-center space-y-2">
                   <p className="text-xs sm:text-sm font-semibold text-amber-900 dark:text-amber-200">
                     {language === "al"
-                      ? "Pikët nuk ruhen për vizitorët. Hyni për të fituar pikë, krijuar seri dhe ruajtur kuizet!"
-                      : "Points are not awarded to guests for completing quizzes. Sign in to earn points, build streaks, and save quizzes!"}
+                      ? "Pikët nuk ruhen për vizitorët. Hyni për të fituar pikë, krijuar seri dhe garuar në Renditje!"
+                      : "Points are not awarded to guests for completing quizzes. Sign in to earn points, build streaks, and race on the Leaderboard!"}
                   </p>
                   <Button
                     size="sm"
@@ -843,7 +900,7 @@ export default function Quiz() {
                 </div>
               )}
 
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
                 <Button
                   size="lg"
                   onClick={resetGame}
@@ -851,6 +908,15 @@ export default function Quiz() {
                 >
                   <RotateCcw className="h-4 w-4" />
                   <span>{language === "al" ? "Luaj Përsëri" : "Play Again"}</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => router.push("/leaderboard")}
+                  className="w-full sm:w-auto font-bold gap-2 border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+                >
+                  <Trophy className="h-4 w-4 fill-amber-500/20" />
+                  <span>{language === "al" ? "Shiko Renditjen 🏆" : "View Leaderboard 🏆"}</span>
                 </Button>
                 <Button
                   variant="outline"

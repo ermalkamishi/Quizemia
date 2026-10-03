@@ -223,3 +223,44 @@ VALUES
         {"id": "d", "text": "Ada Lovelace", "is_correct": false, "color": "green", "shape": "square"}
     ]')
 ON CONFLICT DO NOTHING;
+
+-- ==============================================================================
+-- 9. Competitive Leaderboard Table
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS public.leaderboard (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID UNIQUE NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    nickname TEXT NOT NULL,
+    avatar_url TEXT,
+    total_points INTEGER NOT NULL DEFAULT 0,
+    quizzes_played INTEGER NOT NULL DEFAULT 0,
+    quizzes_created INTEGER NOT NULL DEFAULT 0,
+    correct_answers INTEGER NOT NULL DEFAULT 0,
+    total_answers INTEGER NOT NULL DEFAULT 0,
+    best_streak INTEGER NOT NULL DEFAULT 0,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_leaderboard_points ON public.leaderboard(total_points DESC);
+CREATE INDEX IF NOT EXISTS idx_leaderboard_user_id ON public.leaderboard(user_id);
+
+ALTER TABLE public.leaderboard ENABLE ROW LEVEL SECURITY;
+
+-- Leaderboard is public for everyone to view
+CREATE POLICY "Leaderboard viewable by everyone"
+    ON public.leaderboard
+    FOR SELECT
+    USING (true);
+
+-- Authenticated users can insert/update their own leaderboard score
+CREATE POLICY "Users can insert their own leaderboard score"
+    ON public.leaderboard
+    FOR INSERT
+    WITH CHECK (auth.uid() = user_id OR auth.uid() IS NOT NULL);
+
+CREATE POLICY "Users can update their own leaderboard score"
+    ON public.leaderboard
+    FOR UPDATE
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+
