@@ -1566,7 +1566,6 @@ export default function Quiz() {
           <Tabs value={creationTab} onValueChange={(v) => setCreationTab(v as "ai" | "manual")}>
             <TabsList className="grid grid-cols-2 max-w-md">
               <TabsTrigger value="ai" className="gap-2">
-                <Sparkles className="h-4 w-4 text-amber-500" />
                 <span>{t.quiz.aiTab}</span>
               </TabsTrigger>
               <TabsTrigger value="manual" className="gap-2">
@@ -1623,45 +1622,6 @@ export default function Quiz() {
                         "{quizDescription}"
                       </p>
                     )}
-
-                    {/* Big Statistics Section: Question count, Points, Time */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                      <div className="p-4 rounded-2xl bg-white dark:bg-zinc-800 border border-amber-200 dark:border-zinc-700 text-center shadow-sm">
-                        <div className="text-3xl sm:text-4xl font-black text-amber-600 dark:text-amber-400">
-                          {questionsList.length}
-                        </div>
-                        <div className="text-xs font-bold text-zinc-500 dark:text-zinc-400 mt-1">
-                          {language === "al" ? "Pyetje të Gjeneruara" : "Total Questions"}
-                        </div>
-                      </div>
-
-                      <div className="p-4 rounded-2xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-center shadow-sm">
-                        <div className="text-3xl sm:text-4xl font-black text-blue-600 dark:text-blue-400">
-                          {questionsList.reduce((acc, q) => acc + (q.points || 1000), 0).toLocaleString()}
-                        </div>
-                        <div className="text-xs font-bold text-zinc-500 dark:text-zinc-400 mt-1">
-                          {language === "al" ? "Pikë Maksimale" : "Total Points"}
-                        </div>
-                      </div>
-
-                      <div className="p-4 rounded-2xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-center shadow-sm">
-                        <div className="text-3xl sm:text-4xl font-black text-purple-600 dark:text-purple-400">
-                          ~{Math.max(1, Math.round((questionsList.reduce((acc, q) => acc + (q.time_limit || 20), 0)) / 60))}m
-                        </div>
-                        <div className="text-xs font-bold text-zinc-500 dark:text-zinc-400 mt-1">
-                          {language === "al" ? "Kohëzgjatja Est." : "Est. Playtime"}
-                        </div>
-                      </div>
-
-                      <div className="p-4 rounded-2xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-center shadow-sm">
-                        <div className="text-3xl sm:text-4xl font-black text-emerald-600 dark:text-emerald-400">
-                          4
-                        </div>
-                        <div className="text-xs font-bold text-zinc-500 dark:text-zinc-400 mt-1">
-                          {language === "al" ? "Opsione për Pyetje" : "Choices / Question"}
-                        </div>
-                      </div>
-                    </div>
 
                     {/* Source File indicator if applicable */}
                     {uploadedFile && (
@@ -1869,7 +1829,7 @@ export default function Quiz() {
                 <Card className="border-amber-200/60 dark:border-amber-900/40 bg-gradient-to-b from-amber-50/30 to-transparent dark:from-amber-950/10">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-xl font-bold">
-                      <Sparkles className="h-5 w-5 text-amber-500 fill-amber-400" />
+
                       <span>{t.quiz.aiTitle}</span>
                     </CardTitle>
                     <p className="text-xs sm:text-sm text-zinc-500">
@@ -1884,9 +1844,6 @@ export default function Quiz() {
                           <Globe className="h-4 w-4 text-blue-500" />
                           <span>{language === "al" ? "Gjuha e Kuizit të Gjeneruar" : "Quiz Generation Language"}</span>
                         </label>
-                        <span className="text-[11px] font-semibold text-zinc-400">
-                          {language === "al" ? "Pyetjet do të gjenerohen në këtë gjuhë" : "AI will write questions & answers in this language"}
-                        </span>
                       </div>
                       <div className="grid grid-cols-3 gap-2">
                         <button
@@ -1935,9 +1892,6 @@ export default function Quiz() {
                           <Layers className="h-4 w-4 text-amber-500" />
                           <span>{language === "al" ? "Sasia e Pyetjeve" : "Question Quantity"}</span>
                         </label>
-                        <span className="text-[11px] font-semibold text-zinc-400">
-                          {language === "al" ? "Përshtatur automatikisht me sasinë e materialit" : "Scales dynamically with document length"}
-                        </span>
                       </div>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                         <button
@@ -1951,7 +1905,6 @@ export default function Quiz() {
                           )}
                         >
                           <span className="flex items-center gap-1">
-                            <Sparkles className="h-3 w-3 text-amber-500" />
                             {language === "al" ? "Automatik" : "Auto (Smart)"}
                           </span>
                           <span className="text-[10px] font-normal text-zinc-400">{language === "al" ? "Sipas gjatësisë" : "Adapts to info"}</span>
@@ -2110,7 +2063,6 @@ export default function Quiz() {
                         </span>
                       ) : (
                         <span className="flex items-center gap-2">
-                          <Sparkles className="h-5 w-5" />
                           {t.quiz.generateButton}
                         </span>
                       )}

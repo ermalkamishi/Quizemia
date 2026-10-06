@@ -80,19 +80,19 @@ export default function AboutUs() {
       </section>
 
       {/* 3-Step Animated Guide: How It Works */}
-      <section id="how-it-works" className="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
-        <div className="text-center max-w-2xl mx-auto mb-14 space-y-3">
-          <Badge variant="vibrant">{t.about.howItWorksBadge}</Badge>
-          <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-zinc-900 dark:text-zinc-50">
+      <section id="how-it-works" className="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-10 sm:py-24">
+        <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-14 space-y-2 sm:space-y-3">
+
+          <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-zinc-900 dark:text-zinc-50">
             {t.about.howItWorksTitle}
           </h2>
-          <p className="text-sm sm:text-base text-zinc-500 dark:text-zinc-400">
+          <p className="text-xs sm:text-base text-zinc-500 dark:text-zinc-400">
             {t.about.howItWorksSubtitle}
           </p>
         </div>
 
         {/* Step Selector Tabs for Mobile / Desktop */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-12">
           {steps.map((s, idx) => {
             const Icon = s.icon;
             const isCurrent = activeStep === idx;
