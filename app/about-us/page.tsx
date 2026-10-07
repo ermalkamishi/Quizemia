@@ -2,8 +2,11 @@ import type { Metadata } from "next";
 import AboutUs from "@/components/AboutUs";
 
 export const metadata: Metadata = {
-  title: "Quizemia — Turn lessons into play!",
-  description: "Learn more about our mission and quiz platform",
+  title: "About Us",
+  description: "Learn about Quizemia's mission to turn classroom lessons and study notes into engaging, gamified quiz competitions.",
+  alternates: {
+    canonical: "/about-us",
+  },
 };
 
 export default function AboutUsPage() {

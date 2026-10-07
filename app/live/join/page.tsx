@@ -3,8 +3,11 @@ import type { Metadata } from "next";
 import LivePlayer from "@/components/LivePlayer";
 
 export const metadata: Metadata = {
-  title: "Join Live Game — Quizemia",
+  title: "Join Live Game",
   description: "Enter your 6-digit game PIN to join a synchronized live quiz challenge.",
+  alternates: {
+    canonical: "/live/join",
+  },
 };
 
 export default function LiveJoinPage() {

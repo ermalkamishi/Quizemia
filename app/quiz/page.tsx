@@ -3,8 +3,11 @@ import type { Metadata } from "next";
 import Quiz from "@/components/Quiz";
 
 export const metadata: Metadata = {
-  title: "Quizemia — Turn lessons into play!",
-  description: "Play interactive Kahoot-style quizzes or generate questions with AI.",
+  title: "Quiz Studio & Player",
+  description: "Play interactive Kahoot-style quizzes or generate custom questions instantly with AI.",
+  alternates: {
+    canonical: "/quiz",
+  },
 };
 
 export default function QuizPage() {

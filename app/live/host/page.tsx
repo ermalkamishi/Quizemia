@@ -3,8 +3,11 @@ import type { Metadata } from "next";
 import LiveHost from "@/components/LiveHost";
 
 export const metadata: Metadata = {
-  title: "Live Game Host — Quizemia",
+  title: "Host Live Quiz",
   description: "Host a synchronized multiplayer quiz room with real-time participant scoring.",
+  alternates: {
+    canonical: "/live/host",
+  },
 };
 
 export default function LiveHostPage() {
