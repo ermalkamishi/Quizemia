@@ -149,6 +149,7 @@ export default function Quiz() {
   const autoAdvanceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const handleTimeExpiredRef = useRef<() => void>(() => { });
   const handleNextQuestionRef = useRef<() => void>(() => { });
+  const isTimeExpiredHandledRef = useRef(false);
 
   // Creation State
   const [isPublic, setIsPublic] = useState(true);
@@ -270,6 +271,7 @@ export default function Quiz() {
     setMaxStreak(0);
     setEarnedCompletionBonus(0);
     setIsGameOver(false);
+    isTimeExpiredHandledRef.current = false;
     const initialTime = randomizedQuestions[0]?.time_limit || 20;
     setTimeLeft(initialTime);
   };
@@ -319,17 +321,22 @@ export default function Quiz() {
     }
 
     timerRef.current = setInterval(() => {
+      let expired = false;
       setTimeLeft((prev) => {
         if (prev <= 1) {
-          if (timerRef.current) {
-            clearInterval(timerRef.current);
-            timerRef.current = null;
-          }
-          handleTimeExpiredRef.current();
+          expired = true;
           return 0;
         }
         return prev - 1;
       });
+
+      if (expired) {
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
+        }
+        handleTimeExpiredRef.current();
+      }
     }, 1000);
 
     return () => {
@@ -349,6 +356,9 @@ export default function Quiz() {
   }, []);
 
   const handleTimeExpired = () => {
+    if (isTimeExpiredHandledRef.current || isAnswerRevealed) return;
+    isTimeExpiredHandledRef.current = true;
+
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
@@ -376,6 +386,7 @@ export default function Quiz() {
 
   const handleSelectOption = (option: QuestionOption) => {
     if (isAnswerRevealed) return;
+    isTimeExpiredHandledRef.current = true;
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
@@ -397,15 +408,15 @@ export default function Quiz() {
       setStreak(nextStreak);
       setMaxStreak((prev) => Math.max(prev, nextStreak));
       setCorrectCount((prev) => prev + 1);
-      setScore((prev) => prev + pointsEarned);
-      setLastAnswerResult({ correct: true, points: pointsEarned });
-
-      const bonusItems: string[] = [];
-      if (speedBonus > 0) bonusItems.push(`+${speedBonus} ${language === "al" ? "shpejtësi" : "speed"}`);
-      if (streakBonus > 0) bonusItems.push(`+${streakBonus} ${language === "al" ? "seri" : "streak"}`);
-      const bonusSuffix = bonusItems.length > 0 ? ` (${bonusItems.join(", ")})` : "";
-
       if (user) {
+        setScore((prev) => prev + pointsEarned);
+        setLastAnswerResult({ correct: true, points: pointsEarned });
+
+        const bonusItems: string[] = [];
+        if (speedBonus > 0) bonusItems.push(`+${speedBonus} ${language === "al" ? "shpejtësi" : "speed"}`);
+        if (streakBonus > 0) bonusItems.push(`+${streakBonus} ${language === "al" ? "seri" : "streak"}`);
+        const bonusSuffix = bonusItems.length > 0 ? ` (${bonusItems.join(", ")})` : "";
+
         toast({
           title: language === "al" ? "Saktë! 🎉" : "Correct! 🎉",
           description: `+${pointsEarned} pts${bonusSuffix}`,
@@ -413,9 +424,12 @@ export default function Quiz() {
           duration: 1700,
         });
       } else {
+        // Non-signed in players do not earn points; show only correct message without point signals
+        setLastAnswerResult({ correct: true });
+
         toast({
           title: language === "al" ? "Saktë! 🎉" : "Correct! 🎉",
-          description: `+${pointsEarned} pts${bonusSuffix} ${language === "al" ? "(Hyni për renditje)" : "(Sign in for ranking)"}`,
+          description: language === "al" ? "Përgjigje e saktë!" : "Correct answer!",
           type: "success",
           duration: 1700,
         });
@@ -455,6 +469,7 @@ export default function Quiz() {
       setSelectedOptionId(null);
       setIsAnswerRevealed(false);
       setLastAnswerResult(null);
+      isTimeExpiredHandledRef.current = false;
       setTimeLeft(activeQuiz.questions[nextIdx]?.time_limit || 20);
     } else {
       // Game Over
@@ -466,9 +481,9 @@ export default function Quiz() {
       // Calculate Quiz Completion Mastery Bonus
       const qTotal = activeQuiz.questions.length;
       const completionBonus = calculateCompletionBonus(correctCount, qTotal);
-      setEarnedCompletionBonus(completionBonus);
+      setEarnedCompletionBonus(user ? completionBonus : 0);
 
-      const finalMatchScore = score + (user ? completionBonus : 0);
+      const finalMatchScore = user ? score + completionBonus : 0;
       if (user) {
         setScore(finalMatchScore);
         const nickname =
@@ -886,10 +901,12 @@ export default function Quiz() {
                     {language === "al" ? "Bonus Kuizi" : "Quiz Bonus"}
                   </span>
                   <p className="text-2xl sm:text-3xl font-black text-blue-500 mt-1">
-                    +{earnedCompletionBonus}
+                    {user ? `+${earnedCompletionBonus}` : "0 pts"}
                   </p>
                   <span className="text-[10px] font-medium text-zinc-400 block mt-0.5">
-                    {language === "al" ? "Përfundim me sukses" : "Completion bonus"}
+                    {user
+                      ? (language === "al" ? "Përfundim me sukses" : "Completion bonus")
+                      : (language === "al" ? "Kërkohet hyrja" : "Sign in required")}
                   </span>
                 </div>
               </div>
@@ -906,7 +923,7 @@ export default function Quiz() {
                     onClick={() => openAuthModal("signup")}
                     className="bg-amber-600 hover:bg-amber-700 text-white font-bold gap-1.5"
                   >
-                    <Sparkles className="h-4 w-4" />
+
                     <span>{language === "al" ? "Hyni për të Fituar Pikë" : "Sign In to Earn Points"}</span>
                   </Button>
                 </div>
@@ -921,15 +938,17 @@ export default function Quiz() {
                   <RotateCcw className="h-4 w-4" />
                   <span>{language === "al" ? "Luaj Përsëri" : "Play Again"}</span>
                 </Button>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  onClick={() => router.push("/leaderboard")}
-                  className="w-full sm:w-auto font-bold gap-2 border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30"
-                >
-                  <Trophy className="h-4 w-4 fill-amber-500/20" />
-                  <span>{language === "al" ? "Shiko Renditjen 🏆" : "View Leaderboard 🏆"}</span>
-                </Button>
+                {user && (
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={() => router.push("/leaderboard")}
+                    className="w-full sm:w-auto font-bold gap-2 border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+                  >
+                    <Trophy className="h-4 w-4 fill-amber-500/20" />
+                    <span>{language === "al" ? "Shiko Renditjen 🏆" : "View Leaderboard 🏆"}</span>
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size="lg"
@@ -1019,7 +1038,7 @@ export default function Quiz() {
                             {lastAnswerResult.correct ? (
                               <>
                                 <CheckCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                                <span>{lastAnswerResult.points ? `+${lastAnswerResult.points}` : (language === "al" ? "Saktë" : "Correct")}</span>
+                                <span>{user && lastAnswerResult.points ? `+${lastAnswerResult.points}` : (language === "al" ? "Saktë" : "Correct")}</span>
                               </>
                             ) : (
                               <>
@@ -1125,7 +1144,11 @@ export default function Quiz() {
                   <span className="hidden sm:inline-block w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700" />
 
                   <div className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-bold bg-white/80 dark:bg-zinc-800/80 text-zinc-600 dark:text-zinc-300 border border-zinc-200/70 dark:border-zinc-700/70 shadow-sm backdrop-blur-md">
-                    <span>⚡ {currentQ.points || 1000} pts</span>
+                    <span>
+                      {user
+                        ? `⚡ ${currentQ.points || 1000} pts`
+                        : (language === "al" ? "⚡ Luaj pa pikë" : "⚡ Practice (No points)")}
+                    </span>
                   </div>
                 </div>
 
@@ -1259,12 +1282,13 @@ export default function Quiz() {
 
               {/* Lobby Source & Category Filter Tabs */}
               <div className="flex flex-col gap-3 border-b border-zinc-200 dark:border-zinc-800 pb-4">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <div className="inline-flex p-1 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-xs font-bold">
+                {/* Top Row: Source Filters (All / Official / Community) and Language Filter */}
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="inline-flex p-1 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-xs font-bold shrink-0">
                     <button
                       type="button"
                       onClick={() => setLobbyFilter("all")}
-                      className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${lobbyFilter === "all"
+                      className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-all cursor-pointer ${lobbyFilter === "all"
                         ? "bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-50 shadow-sm"
                         : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
                         }`}
@@ -1274,7 +1298,7 @@ export default function Quiz() {
                     <button
                       type="button"
                       onClick={() => setLobbyFilter("default")}
-                      className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${lobbyFilter === "default"
+                      className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-all cursor-pointer ${lobbyFilter === "default"
                         ? "bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-50 shadow-sm"
                         : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
                         }`}
@@ -1284,7 +1308,7 @@ export default function Quiz() {
                     <button
                       type="button"
                       onClick={() => setLobbyFilter("community")}
-                      className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${lobbyFilter === "community"
+                      className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-all cursor-pointer ${lobbyFilter === "community"
                         ? "bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-50 shadow-sm"
                         : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
                         }`}
@@ -1293,80 +1317,80 @@ export default function Quiz() {
                     </button>
                   </div>
 
-                  {/* Category Pills (horizontal scroll) */}
-                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                    {CATEGORIES.map((cat) => (
+                  {/* Language Filter Pills */}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-xs font-semibold text-zinc-500 shrink-0 flex items-center gap-1">
+                      <Globe className="h-3.5 w-3.5 text-zinc-400" />
+                      <span>{language === "al" ? "Filtro sipas gjuhës:" : "Filter by Language:"}</span>
+                    </span>
+                    <div className="inline-flex items-center gap-1 p-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-900 text-xs font-bold">
                       <button
-                        key={cat}
                         type="button"
-                        onClick={() => setLobbyCategory(cat)}
-                        className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${lobbyCategory === cat
-                          ? "bg-blue-600 text-white shadow-sm"
-                          : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
-                          }`}
+                        onClick={() => setLobbyLanguageFilter("all")}
+                        className={cn(
+                          "px-2.5 py-1 rounded-md transition-all cursor-pointer whitespace-nowrap",
+                          lobbyLanguageFilter === "all"
+                            ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm"
+                            : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200"
+                        )}
                       >
-                        {t.categories[cat] || cat}
+                        {language === "al" ? "Të gjitha" : "All"}
                       </button>
-                    ))}
+                      <button
+                        type="button"
+                        onClick={() => setLobbyLanguageFilter("en")}
+                        className={cn(
+                          "px-2.5 py-1 rounded-md transition-all cursor-pointer flex items-center gap-1",
+                          lobbyLanguageFilter === "en"
+                            ? "bg-blue-500 text-white shadow-sm"
+                            : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200"
+                        )}
+                      >
+                        <span>EN</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setLobbyLanguageFilter("al")}
+                        className={cn(
+                          "px-2.5 py-1 rounded-md transition-all cursor-pointer flex items-center gap-1",
+                          lobbyLanguageFilter === "al"
+                            ? "bg-red-600 text-white shadow-sm"
+                            : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200"
+                        )}
+                      >
+                        <span>AL</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setLobbyLanguageFilter("mk")}
+                        className={cn(
+                          "px-2.5 py-1 rounded-md transition-all cursor-pointer flex items-center gap-1",
+                          lobbyLanguageFilter === "mk"
+                            ? "bg-amber-600 text-white shadow-sm"
+                            : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200"
+                        )}
+                      >
+                        <span>MK</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
 
-                {/* Language Filter Pills Row */}
-                <div className="flex items-center gap-2 pt-1 overflow-x-auto pb-1 scrollbar-none">
-                  <span className="text-xs font-semibold text-zinc-500 shrink-0 flex items-center gap-1">
-                    <Globe className="h-3.5 w-3.5 text-zinc-400" />
-                    <span>{language === "al" ? "Filtro sipas gjuhës:" : "Filter by Language:"}</span>
-                  </span>
-                  <div className="inline-flex items-center gap-1 p-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-900 text-xs font-bold">
+                {/* Category Pills (Full-width flex-wrap so all categories are visible without scrolling) */}
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 pt-0.5">
+                  {CATEGORIES.map((cat) => (
                     <button
+                      key={cat}
                       type="button"
-                      onClick={() => setLobbyLanguageFilter("all")}
-                      className={cn(
-                        "px-2.5 py-1 rounded-md transition-all cursor-pointer",
-                        lobbyLanguageFilter === "all"
-                          ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm"
-                          : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200"
-                      )}
+                      onClick={() => setLobbyCategory(cat)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${lobbyCategory === cat
+                        ? "bg-blue-600 text-white shadow-sm"
+                        : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                        }`}
                     >
-                      {language === "al" ? "Të gjitha" : "All"}
+                      {t.categories[cat] || cat}
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => setLobbyLanguageFilter("en")}
-                      className={cn(
-                        "px-2.5 py-1 rounded-md transition-all cursor-pointer flex items-center gap-1",
-                        lobbyLanguageFilter === "en"
-                          ? "bg-blue-500 text-white shadow-sm"
-                          : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200"
-                      )}
-                    >
-                      <span>EN</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setLobbyLanguageFilter("al")}
-                      className={cn(
-                        "px-2.5 py-1 rounded-md transition-all cursor-pointer flex items-center gap-1",
-                        lobbyLanguageFilter === "al"
-                          ? "bg-red-600 text-white shadow-sm"
-                          : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200"
-                      )}
-                    >
-                      <span>AL</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setLobbyLanguageFilter("mk")}
-                      className={cn(
-                        "px-2.5 py-1 rounded-md transition-all cursor-pointer flex items-center gap-1",
-                        lobbyLanguageFilter === "mk"
-                          ? "bg-amber-600 text-white shadow-sm"
-                          : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200"
-                      )}
-                    >
-                      <span>MK</span>
-                    </button>
-                  </div>
+                  ))}
                 </div>
               </div>
 
@@ -1470,7 +1494,7 @@ export default function Quiz() {
                                 </span>
                                 {isDefault ? (
                                   <Badge className="bg-zinc-900/80 dark:bg-black/80 backdrop-blur-sm text-white border-0 text-[10px] font-bold gap-1 shadow-sm">
-                                    <Sparkles className="h-3 w-3 text-amber-300 fill-amber-300" />
+
                                     <span>{language === "al" ? "Zyrtar" : "Official"}</span>
                                   </Badge>
                                 ) : (
@@ -2246,7 +2270,7 @@ export default function Quiz() {
                     </div>
                   ) : (
                     <div className="flex items-center gap-3 p-3.5 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50/70 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300 text-xs">
-                      <Sparkles className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+
                       <span>
                         {language === "al"
                           ? "Modaliteti Vizitor: Kuizet e krijuara luhen menjëherë në këtë sesion dhe nuk ruhen përgjithmonë në bibliotekë."
@@ -2654,9 +2678,7 @@ export default function Quiz() {
           <DialogContent className="max-w-lg p-6 sm:p-7">
             <DialogHeader className="space-y-2">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-md shadow-blue-500/25">
-                  <Sparkles className="h-5 w-5" />
-                </div>
+
                 <DialogTitle className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-zinc-50 tracking-tight">
                   {language === "al" ? "Publikoni Kuizin Tuaj" : "Publish Your Quiz"}
                 </DialogTitle>

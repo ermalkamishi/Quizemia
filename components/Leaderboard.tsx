@@ -11,7 +11,6 @@ import {
   Target,
   PlusCircle,
   HelpCircle,
-  Sparkles,
   ChevronDown,
   ChevronUp,
   User as UserIcon,

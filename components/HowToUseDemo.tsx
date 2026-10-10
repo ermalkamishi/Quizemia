@@ -379,7 +379,7 @@ export function HowToUseDemo() {
                       {/* Simulated Action Button with Mouse Cursor Pointer */}
                       <div className="relative pt-0.5">
                         <div className="w-full py-1.5 sm:py-2.5 px-3 sm:px-4 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-extrabold text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 shadow-lg shadow-blue-500/20">
-                          <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+
                           <span>{language === "al" ? "Gjenero Kuiz (5 Pyetje)" : "Generate 5-Question Quiz"}</span>
                         </div>
 
@@ -567,7 +567,7 @@ export function HowToUseDemo() {
                           exit={{ opacity: 0, scale: 0.8 }}
                           className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 sm:px-4 py-0.5 sm:py-1 rounded-full bg-gradient-to-r from-emerald-500 to-green-600 text-white font-black text-[10px] sm:text-xs shadow-xl shadow-emerald-500/30 border border-white flex items-center gap-1 z-20 whitespace-nowrap"
                         >
-                          <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+
                           <span>
                             {language === "al" ? "SAKTË! +1,000 PIKË" : "CORRECT! +1,000 PTS"}
                           </span>
